@@ -15,4 +15,11 @@ penguin_species_selector = """
 <|{species}|selector|lov={target_names}|dropdown=True|width=100%|>
 """
 
-Gui(page=penguin_species_selector).run(dark_mode=False)
+
+if __name__ == "__main__":
+        Gui(page=penguin_species_selector).run( host="127.0.0.1",
+                port=1234,
+                dark_mode=False,
+                debug=True,
+                use_reloader=True)
+
