@@ -10,17 +10,21 @@ RUN apt-get update && \
     apt-get install -y git
 
 # Set the working directory
-WORKDIR /src
+WORKDIR /app
 
 # Clone the git repository
-RUN git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/peterspat/ai_case_study.git .
+RUN git clone "https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/peterspat/ai_case_study.git" .
 
 # Install any dependencies required by your Python script
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
+
 # Expose port 5000
 EXPOSE 5000
 
 # Run the Python script
-CMD ["python", "your_script.py"]
+#CMD ["python", "src/your_script.py"]
+CMD ["python", "src/taipy_example.py"]
+
+
