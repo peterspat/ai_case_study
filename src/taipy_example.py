@@ -16,7 +16,7 @@ penguin_species_selector = """
 """
 
 if __name__ == "__main__":
-    tp.Core().run()
+    #tp.Core().run()
     Gui(page=penguin_species_selector).run(title="AI CASE STUDY",
                                            #host="0.0.0.0",
                                            port=5000,
