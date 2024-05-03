@@ -10,10 +10,10 @@ RUN apt-get update && \
     apt-get install -y git
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /src
 
 # Clone the git repository
-RUN git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/your_username/your_repo.git .
+RUN git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/peterspat/ai_case_study.git .
 
 # Install any dependencies required by your Python script
 COPY requirements.txt requirements.txt
