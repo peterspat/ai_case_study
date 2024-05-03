@@ -7,7 +7,8 @@ ENV GIT_PASSWORD 29.7_p91+(bw)
 
 # Install git
 RUN apt-get update && \
-    apt-get install -y git
+    apt-get install -y git \
+    gcc
 
 # Set the working directory
 WORKDIR /app
@@ -26,5 +27,4 @@ EXPOSE 5000
 # Run the Python script
 #CMD ["python", "src/your_script.py"]
 CMD ["python", "src/taipy_example.py"]
-
 
