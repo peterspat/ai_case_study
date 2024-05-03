@@ -19,7 +19,7 @@ penguin_species_selector = """
 if __name__ == "__main__":
         Gui(page=penguin_species_selector).run( host="127.0.0.1",
                 port=1234,
-                dark_mode=False,
+                dark_mode=True,
                 debug=True,
                 use_reloader=True)
 
