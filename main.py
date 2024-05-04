@@ -6,9 +6,27 @@ from nltk.stem import WordNetLemmatizer
 import re
 from langdetect import detect, detect_langs
 
-nltk.download('punkt')
-nltk.download('stopwords')
+def download_missing_nltk_dataset():
+    try:
+        tokens = word_tokenize("blaa")
+        print('punkt exist')
+    except:
+        print('punkt exists')
+        nltk.download('punkt')
 
+    try:
+        stop_words = set(stopwords.words('english'))
+        print('stopwords exist')
+    except:
+        print('stopwords exists')
+        nltk.download('stopwords')
+
+    try:
+        lemmatizer = WordNetLemmatizer()
+        print('wordnet exist')
+    except:
+        print('wordnet exists')
+        nltk.download('wordnet')
 # Data Preprocessing
 # Define preprocessing function
 def preprocess_text(text):
@@ -58,8 +76,9 @@ def detect_and_count_words(text):
 
 
 def main():
+    download_missing_nltk_dataset()
     # Assuming your CSV file is named 'example.csv'
-    csv_file_path = r'C:\Data\ai_case_study\data\posts.csv'
+    csv_file_path = r'data\posts.csv'
 
     # Read the CSV file into a pandas DataFrame
     df = pd.read_csv(csv_file_path, header=None, names=["Blog_Post"])
