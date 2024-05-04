@@ -48,5 +48,5 @@ if __name__ == "__main__":
 
     Gui(pages=pages).run(title="Keyword Extraction and Analysis with KeyBERT and Taipy", 
                          dark_mode=False, 
-                         port=8020, 
+                         port=5000,
                          use_reloader=True)
