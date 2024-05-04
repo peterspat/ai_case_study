@@ -17,7 +17,7 @@ WORKDIR /app
 RUN git clone "https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/peterspat/ai_case_study.git" .
 
 # Install any dependencies required by your Python script
-COPY requirements.txt requirements.txt
+#COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 
