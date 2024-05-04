@@ -17,7 +17,7 @@ menu = [("home", Icon('assets/home.png', 'Home')),
 
         ]
 
-login_open = False
+login_open = True
 password = ''
 page_markdown = """
 <|toggle|theme|>
