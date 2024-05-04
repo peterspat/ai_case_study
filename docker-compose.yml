@@ -4,5 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    command: python my_taipy.py
     ports:
       - "5000:5000"

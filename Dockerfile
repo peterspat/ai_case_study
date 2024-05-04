@@ -26,5 +26,5 @@ EXPOSE 5000
 
 # Run the Python script
 #CMD ["python", "src/your_script.py"]
-CMD ["python", "src/taipy_example.py"]
+#CMD ["python", "ai_case_study/my_taipy.py"]
 

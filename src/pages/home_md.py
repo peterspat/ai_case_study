@@ -23,11 +23,12 @@ Finally, the results from the classification and clustering steps are presented.
 
 Feel free to explore the demo and interact with the presented results. 
 
-<object data="assets/presentation.pdf" type="application/pdf" class="responsive">
-    <embed src="asset/presentation.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="assets/presentation.pdf">Download PDF</a>.</p>
+<object data="src/assets/presentation.pdf" type="application/pdf" class="responsive">
+    <embed src="src/asset/presentation.pdf">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="src/assets/presentation.pdf">Download PDF</a>.</p>
     </embed>
 </object>
+<a href="src/assets/presentation.pdf" download>Download PDF Presentation</a>
 
 <style>
 .responsive {

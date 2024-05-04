@@ -10,14 +10,14 @@ from src.pages.page2_md import page2
 # =======================
 #       Setup menu
 # =======================
-menu = [("home", Icon('assets/home.png', 'Home')),
-    ("analysis", Icon('assets/data-analysis.png', 'Analysis')),
-        ('data', Icon('assets/database.png', 'Data')),
-        ('info', Icon('assets/info.png', 'Info')),
+menu = [("home", Icon('src/assets/home.png', 'Home')),
+        ("analysis", Icon('src/assets/data-analysis.png', 'Analysis')),
+        ('data', Icon('src/assets/database.png', 'Data')),
+        ('info', Icon('src/assets/info.png', 'Info')),
 
         ]
 
-login_open = True
+login_open = False
 password = ''
 page_markdown = """
 <|toggle|theme|>
@@ -34,15 +34,15 @@ page_markdown = """
 <|Sign in|button|class_name=fullwidth plain|on_action=login|>
 |>
 """
-#https://stackoverflow.com/questions/77745948/is-there-any-routes-mechanism-or-anything-for-replacement-in-taipy
+# https://stackoverflow.com/questions/77745948/is-there-any-routes-mechanism-or-anything-for-replacement-in-taipy
 
 pages = {"/": page_markdown,
          "home": home_page,
          "analysis": analysis_page,
          "data": data_page,
          "info": info_page,
-         "page1":page1,
-        "page2":page2
+         "page1": page1,
+         "page2": page2
          }
 
 
@@ -53,13 +53,15 @@ def login(state):
         notify(state, "success", "Logged in!")
     else:
         notify(state, "error", "Wrong password!")
+
+
 def on_menu(state, action, info):
     page = info["args"][0]
     navigate(state, to=page)
 
 
 if __name__ == "__main__":
-    #tp.Core().run()
+    # tp.Core().run()
 
     Gui(pages=pages).run(title="AI CASE STUDY",
                          host="0.0.0.0",
