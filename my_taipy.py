@@ -6,13 +6,15 @@ from src.pages.home_md import home_page
 from src.pages.info_md import info_page
 from src.pages.page1_md import page1
 from src.pages.page2_md import page2
+from src.pages.preprocessing_md import preprocessing_page
 
 # =======================
 #       Setup menu
 # =======================
 menu = [("home", Icon('src/assets/home.png', 'Home')),
+        ('data-exploration', Icon('src/assets/database.png', 'Data Exploration')),
+        ("preprocessing", Icon('src/assets/work-process.png', 'Preprocessing')),
         ("analysis", Icon('src/assets/data-analysis.png', 'Analysis')),
-        ('data', Icon('src/assets/database.png', 'Data')),
         ('info', Icon('src/assets/info.png', 'Info')),
 
         ]
@@ -38,8 +40,9 @@ page_markdown = """
 
 pages = {"/": page_markdown,
          "home": home_page,
+         "data-exploration": data_page,
+         "preprocessing": preprocessing_page,
          "analysis": analysis_page,
-         "data": data_page,
          "info": info_page,
          "page1": page1,
          "page2": page2
