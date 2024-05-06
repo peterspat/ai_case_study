@@ -1,5 +1,7 @@
+import ast
 import json
 import os
+import pickle
 from collections import Counter
 from multiprocessing import cpu_count, Pool
 from sklearn.feature_extraction.text import CountVectorizer
@@ -23,6 +25,8 @@ from langdetect import detect, detect_langs, DetectorFactory
 import plotly.graph_objects as go
 import plotly.express as px
 from textblob import TextBlob as tb
+from tqdm import tqdm
+
 
 def download_missing_nltk_dataset():
 
@@ -163,7 +167,7 @@ def calculate_word_count(series):
 
 
 def parallelize_series_processing(series, func, num_processes=None):
-    num_processes = num_processes or cpu_count()
+    num_processes = num_processes or cpu_count()-3
 
     with Pool(processes=num_processes) as pool:
         results = pool.map(func, series)
@@ -187,7 +191,7 @@ def polarity(text):
 
 
 def parallelize_dataframe(df, func):
-    with Pool(cpu_count()) as pool:
+    with Pool(cpu_count()-3) as pool:
         result_list = pool.map(func, df.iterrows())
     return pd.Series(result_list, index=df.index)
 
@@ -389,39 +393,81 @@ def lemmatize_text(text_list):
 
     return lemmatized_tokens
 
+
+# Define a function to parse a string representation of a list back into a list
+def parse_string_to_list(string_repr):
+    return ast.literal_eval(string_repr)
 def compute_lemmatize_text(row):
     index, data = row
     return lemmatize_text(data['blog_post'])
 def preprocess(df):
-    # Convert text to lowercase
-    df['blog_post'] = df['blog_post'].apply(lambda x: x.lower())
-
     # Remove URLs
-    df['blog_post'] = df['blog_post'].apply(lambda x: re.sub(r'http\S+', '', x))
+    filename = 'removed_urls.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+    else:
+        df['blog_post'] = df['blog_post'].apply(lambda x: re.sub(r'http\S+', '', x))
+        df.to_csv(filename, index=False)
+
 
 
     # Remove non-alphanumeric characters
-    #pattern = r'[^a-zA-Z0-9ßäöüÄÖÜẞ\-\s]'
-    pattern = r'[^a-zA-ZßäöüÄÖÜẞ\s]'
-    df['blog_post'] = df['blog_post'].apply(lambda x: re.sub(pattern, ' ', x))
+
+    filename = 'removed_non_alphanumeric.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+    else:
+        # pattern = r'[^a-zA-Z0-9ßäöüÄÖÜẞ\-\s]'
+        pattern = r'[^a-zA-ZßäöüÄÖÜẞ\s]'
+        df['blog_post'] = df['blog_post'].apply(lambda x: re.sub(pattern, ' ', x))
+        df.to_csv(filename, index=False)
+
+
+    # Convert text to lowercase
+    filename = 'lowercase.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+    else:
+        df['blog_post'] = df['blog_post'].apply(lambda x: x.lower())
+        df.to_csv(filename, index=False)
+
 
     # Tokenize the text
-    df['blog_post'] = df['blog_post'].apply(lambda x: word_tokenize(x))
+
+    filename = 'tokenize.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+        df['blog_post'] = df['blog_post'].apply(parse_string_to_list)
+    else:
+        df['blog_post'] = df['blog_post'].apply(lambda x: word_tokenize(x))
+        df.to_csv(filename, index=False)
+
 
     # Remove stopwords german
     stop_words_de = set(stopwords.words('german'))
 
-    ######## plot stopwords:
-    new = df['blog_post'].values.tolist()
-    corpus = [word for i in new for word in i]
+    dict_file = "removed_german_stopwords.pkl"
+    if os.path.exists(dict_file):
+        # Load the dictionary from file
+        with open(dict_file, "rb") as f:
+            sorted_dic = pickle.load(f)
+    else:
+        # If the dictionary file doesn't exist, create it
+        new = df['blog_post'].values.tolist()
+        corpus = [word for i in new for word in i]
 
-    dic = defaultdict(int)
-    for word in corpus:
-        if word in stop_words_de:
-            dic[word] += 1
+        # Assuming stop_words_de is defined somewhere
+        dic = defaultdict(int)
+        for word in corpus:
+            if word in stop_words_de:
+                dic[word] += 1
 
-    # Sort the dictionary by value (frequency) in descending order
-    sorted_dic = dict(sorted(dic.items(), key=lambda item: item[1], reverse=True))
+        # Sort the dictionary by value (frequency) in descending order
+        sorted_dic = dict(sorted(dic.items(), key=lambda item: item[1], reverse=True))
+
+        # Save the dictionary to file
+        with open(dict_file, "wb") as f:
+            pickle.dump(sorted_dic, f)
 
     # Select the top x stopwords
     top_x = 10  # You can change this value to plot more or fewer stopwords
@@ -448,17 +494,28 @@ def preprocess(df):
 
 
     ######## plot remaining words:
-    corpus = []
-    new = df['blog_post'].values.tolist()
+    counter_file = "remaining_words_after_german_stopwords.pkl"
+    if os.path.exists(counter_file):
+        # Load the Counter from file
+        with open(counter_file, "rb") as f:
+            counter = pickle.load(f)
+    else:
+        # If the Counter file doesn't exist, create it
+        new = df['blog_post'].values.tolist()
 
-    corpus = [word for sublist in new for word in sublist if isinstance(word, str)]
+        corpus = [word for sublist in new for word in sublist if isinstance(word, str)]
 
-    dic = defaultdict(int)
-    for word in corpus:
-        if word in stop_words_de:
-            dic[word] += 1
+        # Assuming stop_words_de is defined somewhere
+        dic = defaultdict(int)
+        for word in corpus:
+            if word in stop_words_de:
+                dic[word] += 1
 
-    counter = Counter(corpus)
+        counter = Counter(corpus)
+
+        # Save the Counter to file
+        with open(counter_file, "wb") as f:
+            pickle.dump(counter, f)
     most = counter.most_common()
 
     top_n_words = 10
@@ -494,17 +551,28 @@ def preprocess(df):
     # Remove stopwords
     stop_words_en = set(stopwords.words('english'))
 
-    ######## plot stopwords:
-    new = df['blog_post'].values.tolist()
-    corpus = [word for i in new for word in i]
+    dict_file = "removed_en_stopwords.pkl"
+    if os.path.exists(dict_file):
+        # Load the dictionary from file
+        with open(dict_file, "rb") as f:
+            sorted_dic = pickle.load(f)
+    else:
+        # If the dictionary file doesn't exist, create it
+        new = df['blog_post'].values.tolist()
+        corpus = [word for i in new for word in i]
 
-    dic = defaultdict(int)
-    for word in corpus:
-        if word in stop_words_en:
-            dic[word] += 1
+        # Assuming stop_words_de is defined somewhere
+        dic = defaultdict(int)
+        for word in corpus:
+            if word in stop_words_en:
+                dic[word] += 1
 
-    # Sort the dictionary by value (frequency) in descending order
-    sorted_dic = dict(sorted(dic.items(), key=lambda item: item[1], reverse=True))
+        # Sort the dictionary by value (frequency) in descending order
+        sorted_dic = dict(sorted(dic.items(), key=lambda item: item[1], reverse=True))
+
+        # Save the dictionary to file
+        with open(dict_file, "wb") as f:
+            pickle.dump(sorted_dic, f)
 
     # Select the top x stopwords
     top_x = 10  # You can change this value to plot more or fewer stopwords
@@ -531,17 +599,28 @@ def preprocess(df):
 
 
     ######## plot remaining words:
-    corpus = []
-    new = df['blog_post'].values.tolist()
+    counter_file = "remaining_words_after_en_stopwords.pkl"
+    if os.path.exists(counter_file):
+        # Load the Counter from file
+        with open(counter_file, "rb") as f:
+            counter = pickle.load(f)
+    else:
+        # If the Counter file doesn't exist, create it
+        new = df['blog_post'].values.tolist()
 
-    corpus = [word for sublist in new for word in sublist if isinstance(word, str)]
+        corpus = [word for sublist in new for word in sublist if isinstance(word, str)]
 
-    dic = defaultdict(int)
-    for word in corpus:
-        if word in stop_words_en:
-            dic[word] += 1
+        # Assuming stop_words_de is defined somewhere
+        dic = defaultdict(int)
+        for word in corpus:
+            if word in stop_words_en:
+                dic[word] += 1
 
-    counter = Counter(corpus)
+        counter = Counter(corpus)
+
+        # Save the Counter to file
+        with open(counter_file, "wb") as f:
+            pickle.dump(counter, f)
     most = counter.most_common()
 
     top_n_words = 10
@@ -550,9 +629,6 @@ def preprocess(df):
         if (word not in stop_words_en):
             x.append(word)
             y.append(count)
-
-    #x = x[::-1]
-    #y = y[::-1]
 
 
     # Create a bar plot
@@ -574,22 +650,38 @@ def preprocess(df):
 
 
     # Lemmatize the tokens ENGLISH
-    lemmatizer = WordNetLemmatizer()
-    df['blog_post'] = df['blog_post'].apply(lambda x: [lemmatizer.lemmatize(word) for word in x])
+    filename = 'lemmatize_english.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+
+
+        # Apply the parsing function to each element in the DataFrame column
+        df['blog_post'] = df['blog_post'].apply(parse_string_to_list)
+    else:
+        lemmatizer = WordNetLemmatizer()
+        df['blog_post'] = df['blog_post'].apply(lambda x: [lemmatizer.lemmatize(word) for word in x])
+        df.to_csv(filename, index=False)
 
     # LEMMATIZE GERMAN:
-    df['blog_post'] = df['blog_post'][:20].apply(lemmatize_text)
+    filename = 'lemmatize_german.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+        df['blog_post'] = df['blog_post'].apply(parse_string_to_list)
+    else:
 
-    #df['blog_post'] = parallelize_dataframe(df, compute_lemmatize_text)
+        df['blog_post'] = df['blog_post'].apply(lambda x: ' '.join(x))
+        # Load spaCy pipeline
+        nlp = spacy.load('de_core_news_md')
 
-    # Join tokens back into a string
-    df['preprocessed_text'] = df['tokens'].apply(lambda x: ' '.join(x))
 
+        lemma_text_list = []
+        for doc in tqdm(nlp.pipe(df["blog_post"]), total=len(df)):
+            lemma_text_list.append(" ".join(token.lemma_ for token in doc))
 
-    english = SpellChecker()  # the default is English (language='en')
-    spanish = SpellChecker(language='es')  # use the Spanish Dictionary
-    russian = SpellChecker(language='ru')  # use the Russian Dictionary
-    arabic = SpellChecker(language='ar')  # use the Arabic Dictionary
+        df['blog_post'] = lemma_text_list
+        df['blog_post'] = df['blog_post'].apply(lambda x: word_tokenize(x))
+        df.to_csv(filename, index=False)
+
     return df
 
 
@@ -613,9 +705,16 @@ def main():
 
     #data_initial_statistics(df)
 
+    # LEMMATIZE GERMAN:
+    filename = 'final_preprocessed.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+        df['blog_post'] = df['blog_post'].apply(parse_string_to_list)
+    else:
+        df = preprocess(df)
+        df.to_csv(filename, index=False)
 
-
-    preprocess(df)
+    x=1
 
 
 
