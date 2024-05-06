@@ -20,6 +20,10 @@ info_page = """
 - pandas
 - nltk
 - langdetect
+- spacy
+- gensim
+- textblob and textblob_de
+- sklearn
 - matplotlib
 - plotly
 

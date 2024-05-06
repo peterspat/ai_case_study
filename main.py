@@ -4,6 +4,13 @@ import os
 import pickle
 from collections import Counter
 from multiprocessing import cpu_count, Pool
+from gensim import corpora, models
+import matplotlib.pyplot as plt
+import scienceplots
+
+plt.style.use('science')
+
+from HanTa import HanoverTagger as ht
 from sklearn.feature_extraction.text import CountVectorizer
 from spellchecker.spellchecker import SpellChecker
 
@@ -54,19 +61,7 @@ def download_missing_nltk_dataset():
 # Define preprocessing function
 
 
-# Classification
-def classify_sentiment(text):
-    # Implementiere Sentiment-Analyse
-    return sentiment_label
 
-def classify_topic(text):
-    # Implementiere Themenklassifizierung
-    return topic_label
-
-# Clustering
-def cluster_texts(texts, num_clusters):
-    # Implementiere Text-Clustering
-    return clusters
 
 # Result Presentation
 def visualize_clusters(clusters):
@@ -231,6 +226,18 @@ def data_initial_statistics(df):
                        yaxis_title='Frequency')
     fig.show()
 
+    # Assuming you have already defined bins and hist_data
+    plt.subplots(figsize=(6, 4), layout='constrained')
+    #plt.hist(hist_data, bins=bins)
+    plt.hist(bins[:-1], bins, weights=hist_data)
+
+    plt.title('Word Count Histogram of Each Post')
+    plt.xlabel('Number of Words')
+    plt.ylabel('Frequency')
+    # fig.subplots_adjust(left=0.15, top=0.95)
+    plt.savefig(f'word_count_histogram.png', dpi=300)
+    plt.show()
+
 
 
 
@@ -238,6 +245,22 @@ def data_initial_statistics(df):
     ##################################
 
     word_count_violin_plot(df, 'blog_post')
+
+    # Count the number of words in each row of the specified column
+    word_counts = df["blog_post"].str.split().apply(len)
+
+    # Create a DataFrame for Matplotlib
+    data = pd.DataFrame({'Word Count': word_counts})
+
+    # Create violin plot using Matplotlib
+    plt.subplots(figsize=(4, 6), layout='constrained')
+    plt.violinplot(data['Word Count'], showmeans=True, showextrema=True)
+    plt.title('Word Count of Each Post Violin Plot')
+    plt.xlabel('Posts')
+    plt.ylabel('Number of Words')
+
+    plt.savefig(f'word_count_violin_plot.png', dpi=300)
+    plt.show()
 
 
     ##################################
@@ -288,6 +311,17 @@ def data_initial_statistics(df):
     fig.update_layout(title='Total word count for each language')
     fig.show()
 
+    # Create pie chart using Matplotlib
+    plt.subplots(figsize=(6, 4), layout='constrained')
+    colors = ['#1f77b4', '#aec7e8', '#7b97c7', '#386cb0', '#ff7f0e', '#ffbb78', '#ff9896', '#d62728', '#9467bd',
+              '#8c564b']
+
+    plt.pie(values, labels=labels, autopct='%1.1f%%', startangle=140, colors=colors)
+    plt.title('Total word count for each language')
+    plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
+    plt.savefig(f'total_word.png', dpi=300)
+    plt.show()
+
     ##################################
 
     n = 3
@@ -312,8 +346,14 @@ def data_initial_statistics(df):
     fig.update_layout(title='Bar Plot', xaxis_title='Count', yaxis_title='Category')
     fig.show()
 
-
-
+    # Create horizontal bar plot using Matplotlib
+    plt.subplots(figsize=(6, 4), layout='constrained')
+    plt.barh(x, y)
+    plt.title('Bar Plot')
+    plt.xlabel('Count')
+    plt.ylabel('Category')
+    plt.savefig(f'n_gram.png', dpi=300)
+    plt.show()
 
     ##################################
 
@@ -355,6 +395,15 @@ def data_initial_statistics(df):
     # Show the histogram
     fig_hist.show()
 
+    plt.subplots(figsize=(6, 4), layout='constrained')
+    plt.hist(df['polarity_score'], bins=int((1 - (-1)) / bin_size), range=(-1, 1), edgecolor='black')
+    plt.title('Polarity Score Distribution')
+    plt.xlabel('Polarity Score')
+    plt.ylabel('Count')
+    plt.grid(True)
+    plt.savefig(f'polarity_score.png', dpi=300)
+    plt.show()
+
     # Calculate polarity using sentiment function
     df['polarity'] = df['polarity_score'].map(lambda x: sentiment(x))
     # Calculate the percentage of each polarity
@@ -374,6 +423,16 @@ def data_initial_statistics(df):
 
     # Show the bar plot
     fig_bar.show()
+
+    plt.subplots(figsize=(6, 4), layout='constrained')
+    plt.bar(polarity_percentages.index, polarity_percentages.values)
+    plt.title('Polarity Distribution')
+    plt.xlabel('Polarity')
+    plt.ylabel('Count')
+
+    plt.grid(True)
+    plt.savefig(f'polarity.png', dpi=300)
+    plt.show()
 
 
 # Define a function to lemmatize a list of strings using spaCy
@@ -397,6 +456,9 @@ def lemmatize_text(text_list):
 # Define a function to parse a string representation of a list back into a list
 def parse_string_to_list(string_repr):
     return ast.literal_eval(string_repr)
+
+    # Tried multiple parts of speech and obtained best topic results using Nouns and Adjectives!
+
 def compute_lemmatize_text(row):
     index, data = row
     return lemmatize_text(data['blog_post'])
@@ -490,6 +552,17 @@ def preprocess(df):
     # Show the plot
     fig.show()
 
+    # Create horizontal bar plot using Matplotlib
+    plt.subplots(figsize=(6, 4), layout='constrained')
+    plt.barh(stopwords_list, frequencies)
+    plt.title('Top {} Stopwords'.format(top_x))
+    plt.xlabel('Frequency')
+    plt.ylabel('Stopwords')
+    #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
+
+    plt.savefig(f'stopword_de.png', dpi=300)
+    plt.show()
+
 
 
 
@@ -541,6 +614,15 @@ def preprocess(df):
 
     # Show the plot
     fig.show()
+    # Create horizontal bar plot using Matplotlib
+    plt.subplots(figsize=(6, 4), layout='constrained')
+    plt.barh(x[:top_n_words][::-1], y[:top_n_words][::-1])
+    plt.title('Top {} Non-Stop'.format(top_n_words))
+    plt.xlabel('Non-Stopwords')
+    plt.ylabel('Frequency')
+    #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
+    plt.savefig(f'remaining_words_after_german_stopwords.png', dpi=300)
+    plt.show()
 
 
     df['blog_post'] = df['blog_post'].apply(lambda x: [word for word in x if word not in stop_words_de])
@@ -594,6 +676,16 @@ def preprocess(df):
 
     # Show the plot
     fig.show()
+    # Create horizontal bar plot using Matplotlib
+    plt.subplots(figsize=(6, 4), layout='constrained')
+    plt.barh(stopwords_list, frequencies)
+    plt.title('Top {} Stopwords'.format(top_x))
+    plt.xlabel('Frequency')
+    plt.ylabel('Stopwords')
+    #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
+
+    plt.savefig(f'stopword_en.png', dpi=300)
+    plt.show()
 
 
 
@@ -643,6 +735,16 @@ def preprocess(df):
 
     # Show the plot
     fig.show()
+    plt.subplots(figsize=(6, 4), layout='constrained')
+    plt.barh(x[:top_n_words][::-1], y[:top_n_words][::-1])
+    plt.title('Top {} Non-Stop'.format(top_n_words))
+    plt.xlabel('Non-Stopwords')
+    plt.ylabel('Frequency')
+    #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
+    plt.savefig(f'remaining_words_after_en_stopwords.png', dpi=300)
+    plt.show()
+
+
     df['blog_post'] = df['blog_post'].apply(lambda x: [word for word in x if word not in stop_words_en])
 
 
@@ -706,6 +808,7 @@ def main():
     #data_initial_statistics(df)
 
     # LEMMATIZE GERMAN:
+    #df = preprocess(df)
     filename = 'final_preprocessed.csv'
     if os.path.exists(filename):
         df = pd.read_csv(filename)
@@ -714,6 +817,59 @@ def main():
         df = preprocess(df)
         df.to_csv(filename, index=False)
 
+    #df=df[:10]
+    comb = df['blog_post'].apply(lambda x: ' '.join(x))
+
+
+    #tagger_de = ht.HanoverTagger('morphmodel_ger.pgz')
+    #words = nltk.word_tokenize("Jahr ja wir es und mal schon")
+    #print(tagger_de.tag_sent(words))
+    #tokens = [word for (word, x, pos) in tagger_de.tag_sent(words, taglevel=1) if pos == 'NN']
+
+    filename = 'tagged.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+        df['blog_post'] = df['blog_post'].apply(parse_string_to_list)
+        df['only_adj_noun_propn'] = df['only_adj_noun_propn'].apply(parse_string_to_list)
+    else:
+        nlp = spacy.load('de_core_news_md')
+
+        pos_text_list = []
+        for doc in tqdm(nlp.pipe(comb), total=len(comb)):
+            pos_text_list.append(" ".join(token.pos_ for token in doc))
+
+        df['tags'] = pos_text_list
+        df['tags'] = df['tags'].apply(lambda x: word_tokenize(x))
+        # Zip the elements of the lists together element-wise
+        df['zipped_column'] = [[(blog, tag) for blog, tag in zip(blog_post, tags)]
+                               for blog_post, tags in zip(df['blog_post'], df['tags'])]
+
+        allowed_values = {'NOUN', 'ADV', 'PROPN'}
+        # only_adj_noun_propn = [[(x, y) for x, y in row if y in allowed_values] for row in df['zipped_column']]
+        only_adj_noun_propn = [[x for x, y in row if y in allowed_values] for row in df['zipped_column']]
+        df['only_adj_noun_propn'] = only_adj_noun_propn
+        # all_adj_nouns = [word for (word, tag) in df['zipped_column'] if (tag == "NOUN" or tag == "ADV" or tag == "PROPN")]
+        df.to_csv(filename, index=False)
+
+
+
+    dic = corpora.Dictionary(df['only_adj_noun_propn'])
+    bow_corpus = [dic.doc2bow(doc) for doc in df['only_adj_noun_propn']]
+
+    lda_model = models.LdaMulticore(bow_corpus,
+                                    random_state=42,
+                                           num_topics=10,
+                                           id2word=dic,
+                                            chunksize=20,
+                                           passes=10,
+                                    iterations=40,
+                                           workers=5)
+
+
+    print(lda_model.show_topics())
+
+    #pyLDAvis.enable_notebook()
+    #vis = pyLDAvis.gensim.prepare(lda_model, bow_corpus, dic)
     x=1
 
 
