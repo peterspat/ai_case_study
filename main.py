@@ -1,8 +1,16 @@
 import json
 import os
+from collections import Counter
 from multiprocessing import cpu_count, Pool
 from sklearn.feature_extraction.text import CountVectorizer
+from spellchecker.spellchecker import SpellChecker
 
+import spacy
+
+import de_core_news_md #spacy download de_core_news_md
+
+from collections import defaultdict
+from textblob_de import TextBlobDE as TextBlobDE  # 2
 import nltk
 import numpy as np
 import pandas as pd
@@ -14,49 +22,33 @@ import re
 from langdetect import detect, detect_langs, DetectorFactory
 import plotly.graph_objects as go
 import plotly.express as px
-from textblob import TextBlob
+from textblob import TextBlob as tb
 
 def download_missing_nltk_dataset():
+
     try:
         tokens = word_tokenize("blaa")
         print('punkt exist')
     except:
-        print('punkt exists')
+        print('punkt not exists')
         nltk.download('punkt')
 
     try:
         stop_words = set(stopwords.words('english'))
         print('stopwords exist')
     except:
-        print('stopwords exists')
+        print('stopwords not exists')
         nltk.download('stopwords')
 
     try:
         lemmatizer = WordNetLemmatizer()
         print('wordnet exist')
     except:
-        print('wordnet exists')
+        print('wordnet not exists')
         nltk.download('wordnet')
 # Data Preprocessing
 # Define preprocessing function
-def preprocess_text(text):
-    # Convert text to lowercase
-    text = text.lower()
-    # Remove URLs
-    text = re.sub(r'http\S+', '', text)
-    # Remove non-alphanumeric characters
-    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
-    # Tokenize the text
-    tokens = word_tokenize(text)
-    # Remove stopwords
-    stop_words = set(stopwords.words('english'))
-    tokens = [word for word in tokens if word not in stop_words]
-    # Lemmatize the tokens
-    lemmatizer = WordNetLemmatizer()
-    tokens = [lemmatizer.lemmatize(word) for word in tokens]
-    # Join tokens back into a string
-    preprocessed_text = ' '.join(tokens)
-    return preprocessed_text
+
 
 # Classification
 def classify_sentiment(text):
@@ -179,6 +171,7 @@ def parallelize_series_processing(series, func, num_processes=None):
     return pd.Series(results)
 
 
+
 def get_top_ngram(corpus, n=None):
     vec = CountVectorizer(ngram_range=(n, n)).fit(corpus)
     bag_of_words = vec.transform(corpus)
@@ -187,119 +180,417 @@ def get_top_ngram(corpus, n=None):
                   for word, idx in vec.vocabulary_.items()]
     words_freq =sorted(words_freq, key = lambda x: x[1], reverse=True)
     return words_freq
+
+
+def polarity(text):
+    return TextBlobDE(text).sentiment.polarity
+
+
+def parallelize_dataframe(df, func):
+    with Pool(cpu_count()) as pool:
+        result_list = pool.map(func, df.iterrows())
+    return pd.Series(result_list, index=df.index)
+
+# Assuming you have already defined the polarity function
+def compute_polarity(row):
+    index, data = row
+    return polarity(data['blog_post'])
+def sentiment(x):
+    if x < 0:
+        return 'negative'
+    elif x == 0:
+        return 'neutral'
+    else:
+        return 'positive'
 def data_initial_statistics(df):
 
+    mean_val, median_val, std_val = calculate_word_count_statistics(df, 'blog_post')
+    print("Mean Word Count:", mean_val)
+    print("Median Word Count:", median_val)
+    print("Standard Deviation of Word Count:", std_val)
 
 
-    # mean_val, median_val, std_val = calculate_word_count_statistics(df, 'blog_post')
-    # print("Mean Word Count:", mean_val)
-    # print("Median Word Count:", median_val)
-    # print("Standard Deviation of Word Count:", std_val)
+    ##################################
+
+    matching_df = filter_dataframe(df, 'blog_post', "Öl")
 
 
-    ###################################
-    #
-    # matching_df = filter_dataframe(df, 'blog_post', "Öl")
-
-
-    ###################################
-
-
-
-    #
-    # hist_data, bins = word_count_histogram(df, 'blog_post')
-    # fig = go.Figure(data=[go.Bar(x=bins, y=hist_data)])
-    # fig.update_layout(title='Word Count Histogram of Each Post',
-    #                    xaxis_title='Number of Words',
-    #                    yaxis_title='Frequency')
-    # fig.show()
-    #
+    ##################################
 
 
 
 
-    ###################################
-
-    # word_count_violin_plot(df, 'blog_post')
-
-
-    ###################################
-    #
-    # filename = "language_word_counts_rounded.json"
-    # # Check if language_word_counts_rounded is already stored
-    # if os.path.exists(filename):
-    #     # Load the stored result
-    #     with open(filename, 'r') as file:
-    #         language_word_counts_rounded = json.load(file)
-    # else:
-    #     # Calculate language word counts for each row in the DataFrame
-    #     #language_word_count = df["blog_post"].apply(detect_and_count_words)
-    #
-    #
-    #     # Parallelize the execution of detect_and_count_words across the DataFrame
-    #     language_word_count = parallelize_series_processing(df["blog_post"], detect_and_count_words)
-    #
-    #     # Calculate word counts for each language
-    #     language_word_counts = calculate_word_count(language_word_count)
-    #     # Round the values to the nearest integer
-    #     language_word_counts_rounded = {lang: round(count) for lang, count in language_word_counts.items()}
-    #     # Save the result
-    #     with open(filename, 'w') as file:
-    #         json.dump(language_word_counts_rounded, file)
-    #
-    # # Combine languages with a percentage below 1 into "other"
-    # threshold = 0.01
-    # total_word_count = sum(language_word_counts_rounded.values())
-    # language_word_counts_combined = {'other': 0}
-    # for lang, count in language_word_counts_rounded.items():
-    #     if count / total_word_count < threshold:
-    #         language_word_counts_combined['other'] += count
-    #     else:
-    #         language_word_counts_combined[lang] = count
-    #
-    # # Print total word count for each language
-    # print("Total word count for each language:")
-    # for lang, count in language_word_counts_combined.items():
-    #     print(f"{lang}: {count}")
-    #
-    # # Create labels and values for the pie chart
-    # labels = list(language_word_counts_combined.keys())
-    # values = list(language_word_counts_combined.values())
-    #
-    # # Create a pie chart using Plotly
-    # fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
-    # fig.update_layout(title='Total word count for each language')
-    # fig.show()
-
-    ###################################
-
-    # n = 3
-    # filename = f"{n}_ngram_result.json"
-    # if os.path.exists(filename):
-    #     with open(filename, 'r') as file:
-    #         top_nrams = json.load(file)
-    # else:
-    #     top_nrams = get_top_ngram(df["blog_post"], n=n)
-    #     top_nrams = [(item[0], int(item[1])) for item in top_nrams]
-    #
-    #     with open(filename, 'w') as file:
-    #         json.dump(top_nrams, file)
-    # top_n = 30
-    # top_nrams = top_nrams[:top_n]
-    # x, y = map(list, zip(*top_nrams))
-    # # Reverse the order of the data
-    # x = x[::-1]
-    # y = y[::-1]
-    # # Create a bar plot using Plotly
-    # fig = go.Figure(data=[go.Bar(x=y, y=x, orientation='h')])
-    # fig.update_layout(title='Bar Plot', xaxis_title='Count', yaxis_title='Category')
-    # fig.show()
+    hist_data, bins = word_count_histogram(df, 'blog_post')
+    fig = go.Figure(data=[go.Bar(x=bins, y=hist_data)])
+    fig.update_layout(title='Word Count Histogram of Each Post',
+                       xaxis_title='Number of Words',
+                       yaxis_title='Frequency')
+    fig.show()
 
 
 
 
-    ###################################
 
+    ##################################
+
+    word_count_violin_plot(df, 'blog_post')
+
+
+    ##################################
+
+    filename = "language_word_counts_rounded.json"
+    # Check if language_word_counts_rounded is already stored
+    if os.path.exists(filename):
+        # Load the stored result
+        with open(filename, 'r') as file:
+            language_word_counts_rounded = json.load(file)
+    else:
+        # Calculate language word counts for each row in the DataFrame
+        #language_word_count = df["blog_post"].apply(detect_and_count_words)
+
+
+        # Parallelize the execution of detect_and_count_words across the DataFrame
+        language_word_count = parallelize_series_processing(df["blog_post"], detect_and_count_words)
+
+        # Calculate word counts for each language
+        language_word_counts = calculate_word_count(language_word_count)
+        # Round the values to the nearest integer
+        language_word_counts_rounded = {lang: round(count) for lang, count in language_word_counts.items()}
+        # Save the result
+        with open(filename, 'w') as file:
+            json.dump(language_word_counts_rounded, file)
+
+    # Combine languages with a percentage below 1 into "other"
+    threshold = 0.01
+    total_word_count = sum(language_word_counts_rounded.values())
+    language_word_counts_combined = {'other': 0}
+    for lang, count in language_word_counts_rounded.items():
+        if count / total_word_count < threshold:
+            language_word_counts_combined['other'] += count
+        else:
+            language_word_counts_combined[lang] = count
+
+    # Print total word count for each language
+    print("Total word count for each language:")
+    for lang, count in language_word_counts_combined.items():
+        print(f"{lang}: {count}")
+
+    # Create labels and values for the pie chart
+    labels = list(language_word_counts_combined.keys())
+    values = list(language_word_counts_combined.values())
+
+    # Create a pie chart using Plotly
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
+    fig.update_layout(title='Total word count for each language')
+    fig.show()
+
+    ##################################
+
+    n = 3
+    filename = f"{n}_ngram_result.json"
+    if os.path.exists(filename):
+        with open(filename, 'r') as file:
+            top_nrams = json.load(file)
+    else:
+        top_nrams = get_top_ngram(df["blog_post"], n=n)
+        top_nrams = [(item[0], int(item[1])) for item in top_nrams]
+
+        with open(filename, 'w') as file:
+            json.dump(top_nrams, file)
+    top_n = 30
+    top_nrams = top_nrams[:top_n]
+    x, y = map(list, zip(*top_nrams))
+    # Reverse the order of the data
+    x = x[::-1]
+    y = y[::-1]
+    # Create a bar plot using Plotly
+    fig = go.Figure(data=[go.Bar(x=y, y=x, orientation='h')])
+    fig.update_layout(title='Bar Plot', xaxis_title='Count', yaxis_title='Category')
+    fig.show()
+
+
+
+
+    ##################################
+
+    filename = f"polarity_score.csv"
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+    else:
+        #df['polarity_score'] = df['blog_post'].apply(lambda x: polarity(x))
+
+        # Applying polarity calculation row-wise in parallel
+        df['polarity_score'] = parallelize_dataframe(df, compute_polarity)
+        df.to_csv(filename, index=False)
+
+
+    # Calculate polarity_score using polarity function
+
+    # Define the number of bins
+    num_bins = 10
+
+    # Calculate bin size dynamically
+    bin_size = 2 / num_bins
+
+    # Create a histogram trace
+    # Create a histogram trace
+    trace_hist = go.Histogram(x=df['polarity_score'],
+                              xbins=dict(start=-1, end=1, size=bin_size),
+                              hoverinfo='y+text',  # Show count and custom text on hover
+                              #hovertemplate='Bin Range: %{x:.2f} -%{x+x:.2f} <br>Count: %{y}')
+                              hovertemplate='Count: %{y}')
+
+    # Create layout for histogram
+    layout_hist = go.Layout(title='Polarity Score Distribution',
+                            xaxis=dict(title='Polarity Score'),
+                            yaxis=dict(title='Count'))
+
+    # Create histogram figure
+    fig_hist = go.Figure(data=[trace_hist], layout=layout_hist)
+
+    # Show the histogram
+    fig_hist.show()
+
+    # Calculate polarity using sentiment function
+    df['polarity'] = df['polarity_score'].map(lambda x: sentiment(x))
+    # Calculate the percentage of each polarity
+    polarity_percentages = df['polarity'].value_counts()#(normalize=True) * 100
+
+    # Create a bar plot
+    trace_bar = go.Bar(x=polarity_percentages.index,
+                       y=polarity_percentages.values)
+
+    # Create layout for bar plot
+    layout_bar = go.Layout(title='Polarity Distribution',
+                           xaxis=dict(title='Polarity'),
+                           yaxis=dict(title='Count'))
+
+    # Create bar plot figure
+    fig_bar = go.Figure(data=[trace_bar], layout=layout_bar)
+
+    # Show the bar plot
+    fig_bar.show()
+
+
+# Define a function to lemmatize a list of strings using spaCy
+def lemmatize_text(text_list):
+    # Initialize an empty list to store the lemmatized tokens
+    lemmatized_tokens = []
+
+    nlp = spacy.load('de_core_news_md')
+    # Iterate through each string in the list
+    for text in text_list:
+        # Process the text using spaCy
+        doc = nlp(text)
+
+        # Lemmatize each token in the processed text and append to the lemmatized_tokens list
+        lemmatized_text = " ".join([token.lemma_ for token in doc])
+        lemmatized_tokens.append(lemmatized_text)
+
+    return lemmatized_tokens
+
+def compute_lemmatize_text(row):
+    index, data = row
+    return lemmatize_text(data['blog_post'])
+def preprocess(df):
+    # Convert text to lowercase
+    df['blog_post'] = df['blog_post'].apply(lambda x: x.lower())
+
+    # Remove URLs
+    df['blog_post'] = df['blog_post'].apply(lambda x: re.sub(r'http\S+', '', x))
+
+
+    # Remove non-alphanumeric characters
+    #pattern = r'[^a-zA-Z0-9ßäöüÄÖÜẞ\-\s]'
+    pattern = r'[^a-zA-ZßäöüÄÖÜẞ\s]'
+    df['blog_post'] = df['blog_post'].apply(lambda x: re.sub(pattern, ' ', x))
+
+    # Tokenize the text
+    df['blog_post'] = df['blog_post'].apply(lambda x: word_tokenize(x))
+
+    # Remove stopwords german
+    stop_words_de = set(stopwords.words('german'))
+
+    ######## plot stopwords:
+    new = df['blog_post'].values.tolist()
+    corpus = [word for i in new for word in i]
+
+    dic = defaultdict(int)
+    for word in corpus:
+        if word in stop_words_de:
+            dic[word] += 1
+
+    # Sort the dictionary by value (frequency) in descending order
+    sorted_dic = dict(sorted(dic.items(), key=lambda item: item[1], reverse=True))
+
+    # Select the top x stopwords
+    top_x = 10  # You can change this value to plot more or fewer stopwords
+    top_stopwords = dict(list(sorted_dic.items())[:top_x])
+
+    # Extract stopwords and their frequencies
+    stopwords_list = list(top_stopwords.keys())[::-1]
+    frequencies = list(top_stopwords.values())[::-1]
+
+    # Create a bar plot
+    fig = go.Figure(data=[go.Bar(x=frequencies, y=stopwords_list, orientation='h')])
+
+    # Customize layout
+    fig.update_layout(
+        title='Top {} Stopwords'.format(top_x),
+        xaxis=dict(title='Stopwords'),
+        yaxis=dict(title='Frequency')
+    )
+
+    # Show the plot
+    fig.show()
+
+
+
+
+    ######## plot remaining words:
+    corpus = []
+    new = df['blog_post'].values.tolist()
+
+    corpus = [word for sublist in new for word in sublist if isinstance(word, str)]
+
+    dic = defaultdict(int)
+    for word in corpus:
+        if word in stop_words_de:
+            dic[word] += 1
+
+    counter = Counter(corpus)
+    most = counter.most_common()
+
+    top_n_words = 10
+    x, y = [], []
+    for word, count in most:
+        if (word not in stop_words_de):
+            x.append(word)
+            y.append(count)
+
+    #x = x[::-1]
+    #y = y[::-1]
+
+
+    # Create a bar plot
+    fig = go.Figure(data=[go.Bar(x=y[:top_n_words][::-1], y=x[:top_n_words][::-1], orientation='h')])
+
+    # Customize layout
+    fig.update_layout(
+        title='Top {} Non-Stop'.format(top_x),
+        xaxis=dict(title='Non-Stopwords'),
+        yaxis=dict(title='Frequency')
+    )
+
+    # Show the plot
+    fig.show()
+
+
+    df['blog_post'] = df['blog_post'].apply(lambda x: [word for word in x if word not in stop_words_de])
+
+
+    ###
+
+    # Remove stopwords
+    stop_words_en = set(stopwords.words('english'))
+
+    ######## plot stopwords:
+    new = df['blog_post'].values.tolist()
+    corpus = [word for i in new for word in i]
+
+    dic = defaultdict(int)
+    for word in corpus:
+        if word in stop_words_en:
+            dic[word] += 1
+
+    # Sort the dictionary by value (frequency) in descending order
+    sorted_dic = dict(sorted(dic.items(), key=lambda item: item[1], reverse=True))
+
+    # Select the top x stopwords
+    top_x = 10  # You can change this value to plot more or fewer stopwords
+    top_stopwords = dict(list(sorted_dic.items())[:top_x])
+
+    # Extract stopwords and their frequencies
+    stopwords_list = list(top_stopwords.keys())[::-1]
+    frequencies = list(top_stopwords.values())[::-1]
+
+    # Create a bar plot
+    fig = go.Figure(data=[go.Bar(x=frequencies, y=stopwords_list, orientation='h')])
+
+    # Customize layout
+    fig.update_layout(
+        title='Top {} Stopwords'.format(top_x),
+        xaxis=dict(title='Stopwords'),
+        yaxis=dict(title='Frequency')
+    )
+
+    # Show the plot
+    fig.show()
+
+
+
+
+    ######## plot remaining words:
+    corpus = []
+    new = df['blog_post'].values.tolist()
+
+    corpus = [word for sublist in new for word in sublist if isinstance(word, str)]
+
+    dic = defaultdict(int)
+    for word in corpus:
+        if word in stop_words_en:
+            dic[word] += 1
+
+    counter = Counter(corpus)
+    most = counter.most_common()
+
+    top_n_words = 10
+    x, y = [], []
+    for word, count in most:
+        if (word not in stop_words_en):
+            x.append(word)
+            y.append(count)
+
+    #x = x[::-1]
+    #y = y[::-1]
+
+
+    # Create a bar plot
+    fig = go.Figure(data=[go.Bar(x=y[:top_n_words][::-1], y=x[:top_n_words][::-1], orientation='h')])
+
+    # Customize layout
+    fig.update_layout(
+        title='Top {} Non-Stop'.format(top_x),
+        xaxis=dict(title='Non-Stopwords'),
+        yaxis=dict(title='Frequency')
+    )
+
+    # Show the plot
+    fig.show()
+    df['blog_post'] = df['blog_post'].apply(lambda x: [word for word in x if word not in stop_words_en])
+
+
+
+
+
+    # Lemmatize the tokens ENGLISH
+    lemmatizer = WordNetLemmatizer()
+    df['blog_post'] = df['blog_post'].apply(lambda x: [lemmatizer.lemmatize(word) for word in x])
+
+    # LEMMATIZE GERMAN:
+    df['blog_post'] = df['blog_post'][:20].apply(lemmatize_text)
+
+    #df['blog_post'] = parallelize_dataframe(df, compute_lemmatize_text)
+
+    # Join tokens back into a string
+    df['preprocessed_text'] = df['tokens'].apply(lambda x: ' '.join(x))
+
+
+    english = SpellChecker()  # the default is English (language='en')
+    spanish = SpellChecker(language='es')  # use the Spanish Dictionary
+    russian = SpellChecker(language='ru')  # use the Russian Dictionary
+    arabic = SpellChecker(language='ar')  # use the Arabic Dictionary
+    return df
 
 
 def main():
@@ -320,17 +611,13 @@ def main():
     print(len(df.index))
 
 
-    data_initial_statistics(df)
+    #data_initial_statistics(df)
 
 
 
+    preprocess(df)
 
 
-
-
-    # Apply preprocessing function to each blog post
-    #df['preprocessed_blog_post'] = df['blog_post'].apply(preprocess_text)
-   # x=1
 
 
 if __name__ == '__main__':
