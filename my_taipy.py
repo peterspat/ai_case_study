@@ -236,7 +236,7 @@ pages = {"/": page_markdown,
 def login(state):
     # Put your own authentication system here
     if state.password == "vector123":
-        state.login_open = False
+        state.login_open = True
         notify(state, "success", "Logged in!")
     else:
         notify(state, "error", "Wrong password!")
