@@ -208,7 +208,6 @@ tqdm==4.66.4
 traitlets==5.14.3
 transformers==4.40.1
 Twisted==23.10.0
-twisted-iocpsupport==1.0.4
 typer==0.9.4
 types-python-dateutil==2.9.0.20240316
 typing_extensions==4.11.0
