@@ -490,50 +490,9 @@ def parse_string_to_list(string_repr):
 def compute_lemmatize_text(row):
     index, data = row
     return lemmatize_text(data['blog_post'])
-def preprocess(df):
-    # Remove URLs
-    filename = 'removed_urls.csv'
-    if os.path.exists(filename):
-        df = pd.read_csv(filename)
-    else:
-        df['blog_post'] = df['blog_post'].apply(lambda x: re.sub(r'http\S+', '', x))
-        df.to_csv(filename, index=False)
 
 
-
-    # Remove non-alphanumeric characters
-
-    filename = 'removed_non_alphanumeric.csv'
-    if os.path.exists(filename):
-        df = pd.read_csv(filename)
-    else:
-        # pattern = r'[^a-zA-Z0-9ßäöüÄÖÜẞ\-\s]'
-        pattern = r'[^a-zA-ZßäöüÄÖÜẞ\s]'
-        df['blog_post'] = df['blog_post'].apply(lambda x: re.sub(pattern, ' ', x))
-        df.to_csv(filename, index=False)
-
-
-    # Convert text to lowercase
-    filename = 'lowercase.csv'
-    if os.path.exists(filename):
-        df = pd.read_csv(filename)
-    else:
-        df['blog_post'] = df['blog_post'].apply(lambda x: x.lower())
-        df.to_csv(filename, index=False)
-
-
-    # Tokenize the text
-
-    filename = 'tokenize.csv'
-    if os.path.exists(filename):
-        df = pd.read_csv(filename)
-        df['blog_post'] = df['blog_post'].apply(parse_string_to_list)
-    else:
-        df['blog_post'] = df['blog_post'].apply(lambda x: word_tokenize(x))
-        df.to_csv(filename, index=False)
-
-
-    # Remove stopwords german
+def remove_stopwords_german(df):
     stop_words_de = set(stopwords.words('german'))
 
     dict_file = "removed_german_stopwords.pkl"
@@ -568,31 +527,28 @@ def preprocess(df):
     frequencies = list(top_stopwords.values())[::-1]
 
     # Create a bar plot
-    fig = go.Figure(data=[go.Bar(x=frequencies, y=stopwords_list, orientation='h')])
+    fig_stopword_de = go.Figure(data=[go.Bar(x=frequencies, y=stopwords_list, orientation='h')])
 
     # Customize layout
-    fig.update_layout(
+    fig_stopword_de.update_layout(
         title='Top {} Stopwords'.format(top_x),
         xaxis=dict(title='Stopwords'),
         yaxis=dict(title='Frequency')
     )
 
     # Show the plot
-    fig.show()
-
-    # Create horizontal bar plot using Matplotlib
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.barh(stopwords_list, frequencies)
-    plt.title('Top {} Stopwords'.format(top_x))
-    plt.xlabel('Frequency')
-    plt.ylabel('Stopwords')
-    #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
-
-    plt.savefig(f'stopword_de.png', dpi=300)
-    plt.show()
-
-
-
+    # fig.show()
+    #
+    # # Create horizontal bar plot using Matplotlib
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.barh(stopwords_list, frequencies)
+    # plt.title('Top {} Stopwords'.format(top_x))
+    # plt.xlabel('Frequency')
+    # plt.ylabel('Stopwords')
+    # # plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
+    #
+    # plt.savefig(f'stopword_de.png', dpi=300)
+    # plt.show()
 
     ######## plot remaining words:
     counter_file = "remaining_words_after_german_stopwords.pkl"
@@ -626,37 +582,37 @@ def preprocess(df):
             x.append(word)
             y.append(count)
 
-    #x = x[::-1]
-    #y = y[::-1]
-
+    # x = x[::-1]
+    # y = y[::-1]
 
     # Create a bar plot
-    fig = go.Figure(data=[go.Bar(x=y[:top_n_words][::-1], y=x[:top_n_words][::-1], orientation='h')])
+    fig_remaining_words_after_de = go.Figure(data=[go.Bar(x=y[:top_n_words][::-1], y=x[:top_n_words][::-1], orientation='h')])
 
     # Customize layout
-    fig.update_layout(
+    fig_remaining_words_after_de.update_layout(
         title='Top {} Non-Stop'.format(top_x),
         xaxis=dict(title='Non-Stopwords'),
         yaxis=dict(title='Frequency')
     )
 
     # Show the plot
-    fig.show()
-    # Create horizontal bar plot using Matplotlib
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.barh(x[:top_n_words][::-1], y[:top_n_words][::-1])
-    plt.title('Top {} Non-Stop'.format(top_n_words))
-    plt.xlabel('Non-Stopwords')
-    plt.ylabel('Frequency')
-    #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
-    plt.savefig(f'remaining_words_after_german_stopwords.png', dpi=300)
-    plt.show()
-
+    # fig.show()
+    # # Create horizontal bar plot using Matplotlib
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.barh(x[:top_n_words][::-1], y[:top_n_words][::-1])
+    # plt.title('Top {} Non-Stop'.format(top_n_words))
+    # plt.xlabel('Non-Stopwords')
+    # plt.ylabel('Frequency')
+    # # plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
+    # plt.savefig(f'remaining_words_after_german_stopwords.png', dpi=300)
+    # plt.show()
 
     df['blog_post'] = df['blog_post'].apply(lambda x: [word for word in x if word not in stop_words_de])
 
+    return fig_stopword_de,fig_remaining_words_after_de,df
 
-    ###
+
+def remove_stopwords_english(df):
 
     # Remove stopwords
     stop_words_en = set(stopwords.words('english'))
@@ -693,27 +649,27 @@ def preprocess(df):
     frequencies = list(top_stopwords.values())[::-1]
 
     # Create a bar plot
-    fig = go.Figure(data=[go.Bar(x=frequencies, y=stopwords_list, orientation='h')])
+    fig_stopword_en = go.Figure(data=[go.Bar(x=frequencies, y=stopwords_list, orientation='h')])
 
     # Customize layout
-    fig.update_layout(
+    fig_stopword_en.update_layout(
         title='Top {} Stopwords'.format(top_x),
         xaxis=dict(title='Stopwords'),
         yaxis=dict(title='Frequency')
     )
 
     # Show the plot
-    fig.show()
-    # Create horizontal bar plot using Matplotlib
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.barh(stopwords_list, frequencies)
-    plt.title('Top {} Stopwords'.format(top_x))
-    plt.xlabel('Frequency')
-    plt.ylabel('Stopwords')
-    #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
-
-    plt.savefig(f'stopword_en.png', dpi=300)
-    plt.show()
+    # fig.show()
+    # # Create horizontal bar plot using Matplotlib
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.barh(stopwords_list, frequencies)
+    # plt.title('Top {} Stopwords'.format(top_x))
+    # plt.xlabel('Frequency')
+    # plt.ylabel('Stopwords')
+    # #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
+    #
+    # plt.savefig(f'stopword_en.png', dpi=300)
+    # plt.show()
 
 
 
@@ -752,32 +708,34 @@ def preprocess(df):
 
 
     # Create a bar plot
-    fig = go.Figure(data=[go.Bar(x=y[:top_n_words][::-1], y=x[:top_n_words][::-1], orientation='h')])
+    fig_remaining_words_after_en = go.Figure(data=[go.Bar(x=y[:top_n_words][::-1], y=x[:top_n_words][::-1], orientation='h')])
 
     # Customize layout
-    fig.update_layout(
+    fig_remaining_words_after_en.update_layout(
         title='Top {} Non-Stop'.format(top_x),
         xaxis=dict(title='Non-Stopwords'),
         yaxis=dict(title='Frequency')
     )
 
     # Show the plot
-    fig.show()
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.barh(x[:top_n_words][::-1], y[:top_n_words][::-1])
-    plt.title('Top {} Non-Stop'.format(top_n_words))
-    plt.xlabel('Non-Stopwords')
-    plt.ylabel('Frequency')
-    #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
-    plt.savefig(f'remaining_words_after_en_stopwords.png', dpi=300)
-    plt.show()
+    # fig.show()
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.barh(x[:top_n_words][::-1], y[:top_n_words][::-1])
+    # plt.title('Top {} Non-Stop'.format(top_n_words))
+    # plt.xlabel('Non-Stopwords')
+    # plt.ylabel('Frequency')
+    # #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
+    # plt.savefig(f'remaining_words_after_en_stopwords.png', dpi=300)
+    # plt.show()
 
 
     df['blog_post'] = df['blog_post'].apply(lambda x: [word for word in x if word not in stop_words_en])
 
 
-    ###
+    return fig_stopword_en,fig_remaining_words_after_en,df
 
+
+def remove_modalpartikeln_german(df):
     # Remove modalpartikeln
     modalpartikeln = [
         "ja", "doch", "eben", "halt", "denn", "wohl", "mal", "schon", "bloß", "auch",
@@ -826,30 +784,27 @@ def preprocess(df):
     frequencies = list(top_stopwords.values())[::-1]
 
     # Create a bar plot
-    fig = go.Figure(data=[go.Bar(x=frequencies, y=stopwords_list, orientation='h')])
+    fig_modal_de = go.Figure(data=[go.Bar(x=frequencies, y=stopwords_list, orientation='h')])
 
     # Customize layout
-    fig.update_layout(
+    fig_modal_de.update_layout(
         title='Top {} Modal Particle'.format(top_x),
         xaxis=dict(title='Modal Particle'),
         yaxis=dict(title='Frequency')
     )
 
     # Show the plot
-    fig.show()
-    # Create horizontal bar plot using Matplotlib
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.barh(stopwords_list, frequencies)
-    plt.title('Top {} Modal Particle'.format(top_x))
-    plt.xlabel('Frequency')
-    plt.ylabel('Modal Particle')
-    #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
-
-    plt.savefig(f'modal_particle_word_de.png', dpi=300)
-    plt.show()
-
-
-
+    # fig.show()
+    # # Create horizontal bar plot using Matplotlib
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.barh(stopwords_list, frequencies)
+    # plt.title('Top {} Modal Particle'.format(top_x))
+    # plt.xlabel('Frequency')
+    # plt.ylabel('Modal Particle')
+    # # plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
+    #
+    # plt.savefig(f'modal_particle_word_de.png', dpi=300)
+    # plt.show()
 
     ######## plot remaining words:
     counter_file = "remaining_words_after_modal_particle_word_de.pkl"
@@ -883,35 +838,101 @@ def preprocess(df):
             x.append(word)
             y.append(count)
 
-
     # Create a bar plot
-    fig = go.Figure(data=[go.Bar(x=y[:top_n_words][::-1], y=x[:top_n_words][::-1], orientation='h')])
+    fig_remaining_words_after_modal_de = go.Figure(data=[go.Bar(x=y[:top_n_words][::-1], y=x[:top_n_words][::-1], orientation='h')])
 
     # Customize layout
-    fig.update_layout(
+    fig_remaining_words_after_modal_de.update_layout(
         title='Top {} Non-Modal-Particle'.format(top_x),
         xaxis=dict(title='Non-Modal-Particle'),
         yaxis=dict(title='Frequency')
     )
 
     # Show the plot
-    fig.show()
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.barh(x[:top_n_words][::-1], y[:top_n_words][::-1])
-    plt.title('Top {} Non-Stop'.format(top_n_words))
-    plt.xlabel('Non-Modal-Particle')
-    plt.ylabel('Frequency')
-    #plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
-    plt.savefig(f'remaining_words_after_modal_particle_word_de.png', dpi=300)
-    plt.show()
-
+    # fig.show()
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.barh(x[:top_n_words][::-1], y[:top_n_words][::-1])
+    # plt.title('Top {} Non-Stop'.format(top_n_words))
+    # plt.xlabel('Non-Modal-Particle')
+    # plt.ylabel('Frequency')
+    # # plt.gca().invert_yaxis()  # Invert y-axis to have highest frequency at the top
+    # plt.savefig(f'remaining_words_after_modal_particle_word_de.png', dpi=300)
+    # plt.show()
 
     df['blog_post'] = df['blog_post'].apply(lambda x: [word for word in x if word not in modal_particle_word_de])
 
+    return fig_modal_de, fig_remaining_words_after_modal_de, df
+
+
+def preprocess(df):
+    # Remove URLs
+    filename = 'removed_urls.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+    else:
+        df['blog_post'] = df['blog_post'].apply(lambda x: re.sub(r'http\S+', '', x))
+        df.to_csv(filename, index=False)
+
+
+
+    # Remove non-alphanumeric characters
+
+    filename = 'removed_non_alphanumeric.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+    else:
+        # pattern = r'[^a-zA-Z0-9ßäöüÄÖÜẞ\-\s]'
+        pattern = r'[^a-zA-ZßäöüÄÖÜẞ\s]'
+        df['blog_post'] = df['blog_post'].apply(lambda x: re.sub(pattern, ' ', x))
+        df.to_csv(filename, index=False)
+
+
+    # Convert text to lowercase
+    filename = 'lowercase.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+    else:
+        df['blog_post'] = df['blog_post'].apply(lambda x: x.lower())
+        df.to_csv(filename, index=False)
+
+
+    # Tokenize the text
+
+    filename = 'tokenize.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+        df['blog_post'] = df['blog_post'].apply(parse_string_to_list)
+    else:
+        df['blog_post'] = df['blog_post'].apply(lambda x: word_tokenize(x))
+        df.to_csv(filename, index=False)
+
+
+    # Remove stopwords german
+
+    fig_stopword_de,fig_remaining_words_after_de,df =  remove_stopwords_german(df)
+
+
+
+    ###
+    fig_stopword_en, fig_remaining_words_after_en, df = remove_stopwords_english(df)
+
+
+
+    ###
+
+    fig_modal_de, fig_remaining_words_after_modal_de, df = remove_modalpartikeln_german(df)
+  
 
 
 
 
+
+    filename = 'after_removing_unwated_words.csv'
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+        df['blog_post'] = df['blog_post'].apply(parse_string_to_list)
+    else:
+        df.to_csv(filename, index=False)
 
 
 
@@ -945,61 +966,63 @@ def preprocess(df):
             lemma_text_list.append(" ".join(token.lemma_ for token in doc))
 
         df['blog_post'] = lemma_text_list
+
+        df['blog_post'] = df['blog_post'].apply(lambda x: x.lower())
         df['blog_post'] = df['blog_post'].apply(lambda x: word_tokenize(x))
         df.to_csv(filename, index=False)
-
+    print('done')
     return df
 
 
 def evaluation(df):
-    word_counts = df['blog_post'].apply(len)
-    hist_data, bins = np.histogram(word_counts, bins='auto')
-    fig = go.Figure(data=[go.Bar(x=bins, y=hist_data)])
-    fig.update_layout(title='Word Count Histogram of Each Post',
-                      xaxis_title='Number of Words',
-                      yaxis_title='Frequency')
-    fig.show()
-
-    # Assuming you have already defined bins and hist_data
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    # plt.hist(hist_data, bins=bins)
-    plt.hist(bins[:-1], bins, weights=hist_data)
-
-    plt.title('Word Count Histogram of Each Post')
-    plt.xlabel('Number of Words')
-    plt.ylabel('Frequency')
-    # fig.subplots_adjust(left=0.15, top=0.95)
-    plt.savefig(f'evaluation_word_count_histogram.png', dpi=300)
-    plt.show()
-
-
-
-    word_counts = df['blog_post'].apply(len)
-
-    # Create a DataFrame for Plotly
-    data = pd.DataFrame({'Word Count': word_counts})
-
-    # Create a violin plot using Plotly
-    fig = px.violin(data, y='Word Count', box=True, points='all')
-    fig.update_layout(title='Word Count of Each Post Violin Plot',
-                      yaxis_title='Number of Words')
-    fig.show()
-
-    # Count the number of words in each row of the specified column
-    word_counts = df["blog_post"].apply(len)
-
-    # Create a DataFrame for Matplotlib
-    data = pd.DataFrame({'Word Count': word_counts})
-
-    # Create violin plot using Matplotlib
-    plt.subplots(figsize=(4, 6), layout='constrained')
-    plt.violinplot(data['Word Count'], showmeans=True, showextrema=True)
-    plt.title('Word Count of Each Post Violin Plot')
-    plt.xlabel('Posts')
-    plt.ylabel('Number of Words')
-
-    plt.savefig(f'evaluation_word_count_violin_plot.png', dpi=300)
-    plt.show()
+    # word_counts = df['blog_post'].apply(len)
+    # hist_data, bins = np.histogram(word_counts, bins='auto')
+    # fig = go.Figure(data=[go.Bar(x=bins, y=hist_data)])
+    # fig.update_layout(title='Word Count Histogram of Each Post',
+    #                   xaxis_title='Number of Words',
+    #                   yaxis_title='Frequency')
+    # fig.show()
+    #
+    # # Assuming you have already defined bins and hist_data
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # # plt.hist(hist_data, bins=bins)
+    # plt.hist(bins[:-1], bins, weights=hist_data)
+    #
+    # plt.title('Word Count Histogram of Each Post')
+    # plt.xlabel('Number of Words')
+    # plt.ylabel('Frequency')
+    # # fig.subplots_adjust(left=0.15, top=0.95)
+    # plt.savefig(f'evaluation_word_count_histogram.png', dpi=300)
+    # plt.show()
+    #
+    #
+    #
+    # word_counts = df['blog_post'].apply(len)
+    #
+    # # Create a DataFrame for Plotly
+    # data = pd.DataFrame({'Word Count': word_counts})
+    #
+    # # Create a violin plot using Plotly
+    # fig = px.violin(data, y='Word Count', box=True, points='all')
+    # fig.update_layout(title='Word Count of Each Post Violin Plot',
+    #                   yaxis_title='Number of Words')
+    # fig.show()
+    #
+    # # Count the number of words in each row of the specified column
+    # word_counts = df["blog_post"].apply(len)
+    #
+    # # Create a DataFrame for Matplotlib
+    # data = pd.DataFrame({'Word Count': word_counts})
+    #
+    # # Create violin plot using Matplotlib
+    # plt.subplots(figsize=(4, 6), layout='constrained')
+    # plt.violinplot(data['Word Count'], showmeans=True, showextrema=True)
+    # plt.title('Word Count of Each Post Violin Plot')
+    # plt.xlabel('Posts')
+    # plt.ylabel('Number of Words')
+    #
+    # plt.savefig(f'evaluation_word_count_violin_plot.png', dpi=300)
+    # plt.show()
 
 
     n = 3
@@ -1120,6 +1143,9 @@ def evaluation(df):
 
 
 
+
+
+
     count_vect = CountVectorizer()
     comb = df['only_adj_noun_propn'].apply(lambda x: ' '.join(x))
     bow = count_vect.fit_transform(comb.values)
@@ -1189,7 +1215,7 @@ def main():
     print(len(df.index))
 
 
-    data_initial_statistics(df)
+    #data_initial_statistics(df)
 
     # LEMMATIZE GERMAN:
     #df = preprocess(df)

@@ -9,4 +9,6 @@ word_types = """
 
 # Word Types
 
+<|{after_word_types}|table|show_all|>
+
 """

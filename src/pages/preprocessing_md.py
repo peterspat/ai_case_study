@@ -9,9 +9,9 @@ preprocessing_page = """
 # Preprocessing
 
 ## Streamlining Text
-- **Removing unwanted characters**: This step involves eliminating any characters in the text that are not relevant for analysis or may introduce noise such as removing special characters, punctuation, and symbols.
+- **Removing unwanted characters**: This step involves eliminating any characters in the text that are not relevant for analysis such as removing special characters, punctuation, and symbols.
 
-- **Transition to lowercase**: Converting all the text to lowercase ensures consistency and reduces the complexity of text analysis for preventing prevents treating words with different cases .
+- **Transition to lowercase**: Converting all the text to lowercase ensures consistency and reduces the complexity of text analysis for preventing treating words with different cases.
 
 - **Tokenize words**: Tokenization involves breaking down the text into individual words or tokens. 
 

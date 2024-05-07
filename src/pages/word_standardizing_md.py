@@ -9,4 +9,14 @@ word_standardizing = """
 
 # Word Filtering
 
+Before Lemmatizing
+
+<|{before_lemmatize}|table|show_all|>
+
+After Lemmatizing (German and English)
+
+
+<|{final_lemmatize}|table|show_all|>
+
+
 """
