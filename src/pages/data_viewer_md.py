@@ -3,7 +3,7 @@ import pandas as pd
 from taipy.gui import notify
 
 data_page = """
-<|navbar|lov={[("data-exploration","Start"),("/general_info", "General Info"), ("/n_gram", "N-Gram"), ("/polarity", "Polarity")]}|>
+<|navbar|lov={[("/general_info", "General Info"), ("/n_gram", "N-Gram"), ("/polarity", "Polarity")]}|>
 # Data Viewer
 
 Explore the data set of blog.fefe.de.

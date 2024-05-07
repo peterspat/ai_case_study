@@ -374,6 +374,92 @@ def polarity_score_calc(df):
 
 
 
+
+
+
+def analysis_polarity_score_calc(df):
+    filename = f"evaluation_polarity_score.csv"
+    if os.path.exists(filename):
+        df_pol = pd.read_csv(filename)
+    else:
+        # df['polarity_score'] = df['blog_post'].apply(lambda x: polarity(x))
+
+        # Applying polarity calculation row-wise in parallel
+        df_pol = copy(df)
+        df_pol['blog_post'] = df['blog_post'].apply(lambda x: ' '.join(x))
+        df_pol['polarity_score'] = parallelize_dataframe(df_pol, compute_polarity)
+        df_pol.to_csv(filename, index=False)
+
+        # Calculate polarity_score using polarity function
+
+        # Define the number of bins
+    num_bins = 10
+
+    # Calculate bin size dynamically
+    bin_size = 2 / num_bins
+
+    # Create a histogram trace
+    # Create a histogram trace
+    trace_hist = go.Histogram(x=df_pol['polarity_score'],
+                              xbins=dict(start=-1, end=1, size=bin_size),
+                              hoverinfo='y+text',  # Show count and custom text on hover
+                              # hovertemplate='Bin Range: %{x:.2f} -%{x+x:.2f} <br>Count: %{y}')
+                              hovertemplate='Count: %{y}')
+
+    # Create layout for histogram
+    layout_hist = go.Layout(title='Polarity Score Distribution',
+                            xaxis=dict(title='Polarity Score'),
+                            yaxis=dict(title='Count'))
+
+    # Create histogram figure
+    fig = go.Figure(data=[trace_hist], layout=layout_hist)
+
+    # Show the histogram
+    # fig_hist.show()
+    #
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.hist(df_pol['polarity_score'], bins=int((1 - (-1)) / bin_size), range=(-1, 1), edgecolor='black')
+    # plt.title('Polarity Score Distribution')
+    # plt.xlabel('Polarity Score')
+    # plt.ylabel('Count')
+    # plt.grid(True)
+    # plt.savefig(f'evaluation_polarity_score.png', dpi=300)
+    # plt.show()
+
+    # Calculate polarity using sentiment function
+    df_pol['polarity'] = df_pol['polarity_score'].map(lambda x: sentiment(x))
+    # Calculate the percentage of each polarity
+    polarity_percentages = df_pol['polarity'].value_counts()  # (normalize=True) * 100
+
+    # Create a bar plot
+    trace_bar = go.Bar(x=polarity_percentages.index,
+                       y=polarity_percentages.values)
+
+    # Create layout for bar plot
+    layout_bar = go.Layout(title='Polarity Distribution',
+                           xaxis=dict(title='Polarity'),
+                           yaxis=dict(title='Count'))
+
+    # Create bar plot figure
+    fig_simp = go.Figure(data=[trace_bar], layout=layout_bar)
+
+    # Show the bar plot
+    #fig_simp.show()
+    #
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.bar(polarity_percentages.index, polarity_percentages.values)
+    # plt.title('Polarity Distribution')
+    # plt.xlabel('Polarity')
+    # plt.ylabel('Count')
+    #
+    # plt.grid(True)
+    # plt.savefig(f'evaluation_polarity.png', dpi=300)
+    # plt.show()
+
+
+    return fig, fig_simp
+
+
 def data_initial_statistics(df):
 
     mean_val, median_val, std_val = calculate_word_count_statistics(df, 'blog_post')
@@ -969,6 +1055,45 @@ def preprocess(df):
     return df
 
 
+def analysis_n_gram_calc(df, n):
+    filename = f"evaluation_{n}_ngram_result.json"
+    if os.path.exists(filename):
+        with open(filename, 'r') as file:
+            top_nrams = json.load(file)
+    else:
+        comb = df['blog_post'].apply(lambda x: ' '.join(x))
+        top_nrams = get_top_ngram(comb, n=n)
+        top_nrams = [(item[0], int(item[1])) for item in top_nrams]
+
+        with open(filename, 'w') as file:
+            json.dump(top_nrams, file)
+    top_n = 30
+    top_nrams = top_nrams[:top_n]
+    x, y = map(list, zip(*top_nrams))
+    # Reverse the order of the data
+    x = x[::-1]
+    y = y[::-1]
+    # Create a bar plot using Plotly
+    fig = go.Figure(data=[go.Bar(x=y, y=x, orientation='h')])
+    fig.update_layout(
+        title='Bar Plot',
+        xaxis_title='Count',
+        yaxis_title='Category',
+        yaxis_tickfont=dict(size=8)  # Adjust the font size as needed
+    )
+    # fig.show()
+    #
+    # # Create horizontal bar plot using Matplotlib
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.barh(x, y)
+    # plt.title('Bar Plot')
+    # plt.xlabel('Count')
+    # plt.ylabel('Category')
+    # plt.savefig(f'evaluation_n_gram.png', dpi=300)
+    # plt.show()
+    return fig
+
+
 def evaluation(df):
     # word_counts = df['blog_post'].apply(len)
     # hist_data, bins = np.histogram(word_counts, bins='auto')
@@ -1020,119 +1145,14 @@ def evaluation(df):
     # plt.show()
 
 
-    n = 3
-    filename = f"evaluation_{n}_ngram_result.json"
-    if os.path.exists(filename):
-        with open(filename, 'r') as file:
-            top_nrams = json.load(file)
-    else:
-        comb = df['blog_post'].apply(lambda x: ' '.join(x))
-        top_nrams = get_top_ngram(comb, n=n)
-        top_nrams = [(item[0], int(item[1])) for item in top_nrams]
+    fig = analysis_n_gram_calc(copy(df),1)
+    fig = analysis_n_gram_calc(copy(df),2)
+    fig = analysis_n_gram_calc(copy(df),3)
 
-        with open(filename, 'w') as file:
-            json.dump(top_nrams, file)
-    top_n = 30
-    top_nrams = top_nrams[:top_n]
-    x, y = map(list, zip(*top_nrams))
-    # Reverse the order of the data
-    x = x[::-1]
-    y = y[::-1]
-    # Create a bar plot using Plotly
-    fig = go.Figure(data=[go.Bar(x=y, y=x, orientation='h')])
-    fig.update_layout(title='Bar Plot', xaxis_title='Count', yaxis_title='Category')
-    fig.show()
-
-    # Create horizontal bar plot using Matplotlib
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.barh(x, y)
-    plt.title('Bar Plot')
-    plt.xlabel('Count')
-    plt.ylabel('Category')
-    plt.savefig(f'evaluation_n_gram.png', dpi=300)
-    plt.show()
 
     ##################################
 
-    filename = f"evaluation_polarity_score.csv"
-    if os.path.exists(filename):
-        df_pol = pd.read_csv(filename)
-    else:
-        # df['polarity_score'] = df['blog_post'].apply(lambda x: polarity(x))
-
-        # Applying polarity calculation row-wise in parallel
-        df_pol = copy(df)
-        df_pol['blog_post'] = df['blog_post'].apply(lambda x: ' '.join(x))
-        df_pol['polarity_score'] = parallelize_dataframe(df_pol, compute_polarity)
-        df_pol.to_csv(filename, index=False)
-
-    # Calculate polarity_score using polarity function
-
-    # Define the number of bins
-    num_bins = 10
-
-    # Calculate bin size dynamically
-    bin_size = 2 / num_bins
-
-    # Create a histogram trace
-    # Create a histogram trace
-    trace_hist = go.Histogram(x=df_pol['polarity_score'],
-                              xbins=dict(start=-1, end=1, size=bin_size),
-                              hoverinfo='y+text',  # Show count and custom text on hover
-                              # hovertemplate='Bin Range: %{x:.2f} -%{x+x:.2f} <br>Count: %{y}')
-                              hovertemplate='Count: %{y}')
-
-    # Create layout for histogram
-    layout_hist = go.Layout(title='Polarity Score Distribution',
-                            xaxis=dict(title='Polarity Score'),
-                            yaxis=dict(title='Count'))
-
-    # Create histogram figure
-    fig_hist = go.Figure(data=[trace_hist], layout=layout_hist)
-
-    # Show the histogram
-    fig_hist.show()
-
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.hist(df_pol['polarity_score'], bins=int((1 - (-1)) / bin_size), range=(-1, 1), edgecolor='black')
-    plt.title('Polarity Score Distribution')
-    plt.xlabel('Polarity Score')
-    plt.ylabel('Count')
-    plt.grid(True)
-    plt.savefig(f'evaluation_polarity_score.png', dpi=300)
-    plt.show()
-
-    # Calculate polarity using sentiment function
-    df_pol['polarity'] = df_pol['polarity_score'].map(lambda x: sentiment(x))
-    # Calculate the percentage of each polarity
-    polarity_percentages = df_pol['polarity'].value_counts()  # (normalize=True) * 100
-
-    # Create a bar plot
-    trace_bar = go.Bar(x=polarity_percentages.index,
-                       y=polarity_percentages.values)
-
-    # Create layout for bar plot
-    layout_bar = go.Layout(title='Polarity Distribution',
-                           xaxis=dict(title='Polarity'),
-                           yaxis=dict(title='Count'))
-
-    # Create bar plot figure
-    fig_bar = go.Figure(data=[trace_bar], layout=layout_bar)
-
-    # Show the bar plot
-    fig_bar.show()
-
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.bar(polarity_percentages.index, polarity_percentages.values)
-    plt.title('Polarity Distribution')
-    plt.xlabel('Polarity')
-    plt.ylabel('Count')
-
-    plt.grid(True)
-    plt.savefig(f'evaluation_polarity.png', dpi=300)
-    plt.show()
-
-
+    fig = analysis_polarity_score_calc(copy(df))
 
 
 
@@ -1257,7 +1277,7 @@ def main():
         df.to_csv(filename, index=False)
 
 
-    #evaluation(df)
+    evaluation(df)
 
 
 

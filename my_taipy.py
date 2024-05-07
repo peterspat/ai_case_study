@@ -1,23 +1,26 @@
+import os
 import re
 from copy import copy
 
 import pandas as pd
 import plotly.graph_objects as go
+from matplotlib import pyplot as plt
 from nltk import word_tokenize
 from taipy.gui import Gui, navigate, Icon, notify
+from wordcloud import WordCloud
 
 from main import filter_dataframe, calculate_word_count_statistics, word_count_histogram, \
     language_word_counts_rounded_calc, \
     word_count_violin_plot, n_gram_calc, polarity_score_calc, remove_stopwords_german, remove_stopwords_english, \
-    remove_modalpartikeln_german, parse_string_to_list
+    remove_modalpartikeln_german, parse_string_to_list, analysis_n_gram_calc, analysis_polarity_score_calc
 from src.pages.analysis_md import analysis_page
+from src.pages.analysis_n_gram_md import analysis_n_gram_page
+from src.pages.analysis_polarity_md import analysis_polarity_page
 from src.pages.data_viewer_md import data_page
 from src.pages.general_info_md import general_info
 from src.pages.home_md import home_page
 from src.pages.info_md import info_page
 from src.pages.n_gram_md import n_gram
-from src.pages.page1_md import page1
-from src.pages.page2_md import page2
 from src.pages.polarity_md import polarity_page
 from src.pages.preprocessing_md import preprocessing_page
 from src.pages.text_streamling_md import text_streamlining
@@ -91,8 +94,6 @@ table_after_all['blog_post'] = table_after_all['blog_post'].apply(lambda x: re.s
 
 table_after_all['blog_post'] = table_after_all['blog_post'].apply(lambda x: x.lower())
 
-
-
 table_after_all['blog_post'] = table_after_all['blog_post'].apply(lambda x: word_tokenize(x))
 table_after_all['blog_post'] = table_after_all['blog_post'].apply(lambda x: ' '.join(x))
 
@@ -102,31 +103,71 @@ fig_stopword_de, fig_remaining_words_after_de, table_for_stop_words = remove_sto
 
 fig_stopword_en, fig_remaining_words_after_en, table_for_stop_words = remove_stopwords_english(table_for_stop_words)
 
-fig_modal_de, fig_remaining_words_after_modal_de, table_for_stop_words = remove_modalpartikeln_german(table_for_stop_words)
+fig_modal_de, fig_remaining_words_after_modal_de, table_for_stop_words = remove_modalpartikeln_german(
+    table_for_stop_words)
 
 filename = 'after_removing_unwated_words.csv'
-before_lemmatize = pd.read_csv(filename,nrows=3)
+before_lemmatize = pd.read_csv(filename, nrows=3)
 before_lemmatize['blog_post'] = before_lemmatize['blog_post'].apply(parse_string_to_list)
 before_lemmatize['blog_post'] = before_lemmatize['blog_post'].apply(lambda x: ' '.join(x))
-before_lemmatize=before_lemmatize.drop(['polarity_score', 'polarity'], axis=1)
+before_lemmatize = before_lemmatize.drop(['polarity_score', 'polarity'], axis=1)
 
 # Le
 filename = 'lemmatize_german.csv'
 final_lemmatize = pd.read_csv(filename, nrows=3)
 final_lemmatize['blog_post'] = final_lemmatize['blog_post'].apply(parse_string_to_list)
 final_lemmatize['blog_post'] = final_lemmatize['blog_post'].apply(lambda x: ' '.join(x))
-final_lemmatize=final_lemmatize.drop(['polarity_score', 'polarity'], axis=1)
+final_lemmatize = final_lemmatize.drop(['polarity_score', 'polarity'], axis=1)
 
 filename = 'tagged.csv'
-after_word_types = pd.read_csv(filename,nrows=3)
+after_word_types = pd.read_csv(filename, nrows=3)
 after_word_types['blog_post'] = after_word_types['blog_post'].apply(parse_string_to_list)
 after_word_types['only_adj_noun_propn'] = after_word_types['only_adj_noun_propn'].apply(parse_string_to_list)
 after_word_types['zipped_column'] = after_word_types['zipped_column'].apply(parse_string_to_list)
 after_word_types['tags'] = after_word_types['tags'].apply(parse_string_to_list)
 after_word_types['blog_post'] = after_word_types['blog_post'].apply(lambda x: ' '.join(x))
 after_word_types['tags'] = after_word_types['tags'].apply(lambda x: ' '.join(x))
-after_word_types=after_word_types.drop(['zipped_column', 'only_adj_noun_propn','polarity_score', 'polarity'], axis=1)
-#after_word_types=after_word_types.drop(['tags', 'only_adj_noun_propn'], axis=1)
+after_word_types = after_word_types.drop(['zipped_column', 'only_adj_noun_propn', 'polarity_score', 'polarity'], axis=1)
+# after_word_types=after_word_types.drop(['tags', 'only_adj_noun_propn'], axis=1)
+
+
+filename = 'tagged.csv'
+df_for_analysis = pd.read_csv(filename)
+df_for_analysis['blog_post'] = df_for_analysis['blog_post'].apply(parse_string_to_list)
+df_for_analysis['only_adj_noun_propn'] = df_for_analysis['only_adj_noun_propn'].apply(parse_string_to_list)
+output_file = 'wordcloud_startpage.png'
+
+if not os.path.exists(output_file):
+
+    combined_string = ''.join(df_for_analysis['blog_post'])
+
+    wordcloud = WordCloud(width=800, height=400).generate(combined_string)
+    mp_figure, ax = plt.subplots(figsize=(12, 8), constrained_layout=True)
+    ax.imshow(wordcloud)
+    ax.axis("off")
+
+    plt.savefig(output_file, dpi=300)
+    print("Word cloud image saved successfully.")
+else:
+    print("Word cloud image already exists. Not saved.")
+
+
+filename = 'tagged.csv'
+df_for_analysis_n_gram_calc = pd.read_csv(filename)
+df_for_analysis_n_gram_calc['blog_post'] = df_for_analysis_n_gram_calc['blog_post'].apply(parse_string_to_list)
+df_for_analysis_n_gram_calc['only_adj_noun_propn'] = df_for_analysis_n_gram_calc['only_adj_noun_propn'].apply(parse_string_to_list)
+
+analysis_slider_ngram_value = 1
+
+analysis_histogram_ngram = analysis_n_gram_calc(copy(df_for_analysis_n_gram_calc), analysis_slider_ngram_value)
+
+
+analysis_polarity_histogram, analysis_polarity_histogram_simplified = analysis_polarity_score_calc(copy(df_for_analysis_n_gram_calc))
+def on_slider_ngram_analysis(state):
+     state.analysis_histogram_ngram = analysis_n_gram_calc(copy(df_for_analysis_n_gram_calc), state.analysis_slider_ngram_value)
+
+
+
 
 
 # =======================
@@ -165,8 +206,6 @@ pages = {"/": page_markdown,
          "preprocessing": preprocessing_page,
          "analysis": analysis_page,
          "info": info_page,
-         "page1": page1,
-         "page2": page2,
          "general_info": general_info,
          "n_gram": n_gram,
          "polarity": polarity_page,
@@ -174,6 +213,8 @@ pages = {"/": page_markdown,
          "word_filter": word_filter,
          "word_standardizing": word_standardizing,
          "word_types": word_types,
+         "analysis_n_gram": analysis_n_gram_page,
+         "analysis_polarity": analysis_polarity_page,
          }
 
 
