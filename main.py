@@ -278,7 +278,12 @@ def n_gram_calc(df, n):
     y = y[::-1]
     # Create a bar plot using Plotly
     fig = go.Figure(data=[go.Bar(x=y, y=x, orientation='h')])
-    fig.update_layout(title='Bar Plot', xaxis_title='Count', yaxis_title='Category')
+    fig.update_layout(
+        title='Bar Plot',
+        xaxis_title='Count',
+        yaxis_title='Category',
+        yaxis_tickfont=dict(size=8)  # Adjust the font size as needed
+    )
     #fig.show()
 
     # # Create horizontal bar plot using Matplotlib

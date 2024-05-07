@@ -52,7 +52,7 @@ table_search = filter_dataframe(table_first_page, 'blog_post', "Öl")
 
 def on_button_action(state):
     if state.text != '':
-        notify(state, 'info', f'Search Text is: {state.text}')
+        #notify(state, 'info', f'Search Text is: {state.text}')
         state.table_search = filter_dataframe(table_first_page, 'blog_post', state.text)
 
 
