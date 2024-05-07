@@ -14,7 +14,7 @@ from main import filter_dataframe, calculate_word_count_statistics, word_count_h
     language_word_counts_rounded_calc, \
     word_count_violin_plot, n_gram_calc, polarity_score_calc, remove_stopwords_german, remove_stopwords_english, \
     remove_modalpartikeln_german, parse_string_to_list, analysis_n_gram_calc, analysis_polarity_score_calc, \
-    my_clustering
+    my_clustering, download_missing_nltk_dataset
 from src.pages.analysis_clustering_md import analysis_clustering_page
 from src.pages.analysis_md import analysis_page
 from src.pages.analysis_n_gram_md import analysis_n_gram_page
@@ -31,6 +31,7 @@ from src.pages.word_filter_md import word_filter
 from src.pages.word_standardizing_md import word_standardizing
 from src.pages.word_types_md import word_types
 
+download_missing_nltk_dataset()
 
 def get_table():
     # Assuming your CSV file is named 'example.csv'
