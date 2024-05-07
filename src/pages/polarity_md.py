@@ -9,9 +9,9 @@ polarity_page = """
 ## Simplified Categories:
 Assigning Categories to Value Ranges
 [-1, 0) = negative
-</br>
+<br/>
 0 = negative
-</br>
+<br/>
 
 (0, 1] = negative
 

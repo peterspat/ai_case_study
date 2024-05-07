@@ -22,6 +22,10 @@ from src.pages.preprocessing_md import preprocessing_page
 import plotly.graph_objects as go
 import plotly.express as px
 
+from src.pages.text_streamling_md import text_streamlining
+from src.pages.word_filter_md import word_filter
+from src.pages.word_standardizing_md import word_standardizing
+from src.pages.word_types_md import word_types
 
 
 def get_table():
@@ -131,6 +135,10 @@ pages = {"/": page_markdown,
          "general_info": general_info,
          "n_gram": n_gram,
          "polarity": polarity_page,
+         "text_streamlining": text_streamlining,
+         "word_filter": word_filter,
+         "word_standardizing": word_standardizing,
+         "word_types": word_types,
          }
 
 
