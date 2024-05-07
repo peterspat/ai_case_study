@@ -20,6 +20,7 @@ RUN git clone "https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/peterspat/ai_c
 #COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
+RUN python spacy download de_core_news_md
 
 # Expose port 5000
 EXPOSE 5000
