@@ -195,7 +195,7 @@ menu = [("home", Icon('src/assets/home.png', 'Home')),
 
         ]
 
-login_open = False
+login_open = True
 password = ''
 page_markdown = """
 <|toggle|theme|>
@@ -236,7 +236,7 @@ pages = {"/": page_markdown,
 def login(state):
     # Put your own authentication system here
     if state.password == "vector123":
-        state.login_open = True
+        state.login_open = False
         notify(state, "success", "Logged in!")
     else:
         notify(state, "error", "Wrong password!")
