@@ -127,7 +127,7 @@ def word_count_violin_plot(df, column_name):
     fig = px.violin(data, y='Word Count', box=True, points='all')
     fig.update_layout(title='Word Count of Each Post Violin Plot',
                       yaxis_title='Number of Words')
-    fig.show()
+    return fig
 
 
 def calculate_word_count_statistics(df, column_name):
@@ -204,69 +204,9 @@ def sentiment(x):
         return 'neutral'
     else:
         return 'positive'
-def data_initial_statistics(df):
-
-    mean_val, median_val, std_val = calculate_word_count_statistics(df, 'blog_post')
-    print("Mean Word Count:", mean_val)
-    print("Median Word Count:", median_val)
-    print("Standard Deviation of Word Count:", std_val)
 
 
-    ##################################
-
-    matching_df = filter_dataframe(df, 'blog_post', "Öl")
-
-
-    ##################################
-
-
-
-
-    hist_data, bins = word_count_histogram(df, 'blog_post')
-    fig = go.Figure(data=[go.Bar(x=bins, y=hist_data)])
-    fig.update_layout(title='Word Count Histogram of Each Post',
-                       xaxis_title='Number of Words',
-                       yaxis_title='Frequency')
-    fig.show()
-
-    # Assuming you have already defined bins and hist_data
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    #plt.hist(hist_data, bins=bins)
-    plt.hist(bins[:-1], bins, weights=hist_data)
-
-    plt.title('Word Count Histogram of Each Post')
-    plt.xlabel('Number of Words')
-    plt.ylabel('Frequency')
-    # fig.subplots_adjust(left=0.15, top=0.95)
-    plt.savefig(f'word_count_histogram.png', dpi=300)
-    plt.show()
-
-
-
-
-
-    ##################################
-
-    word_count_violin_plot(df, 'blog_post')
-
-    # Count the number of words in each row of the specified column
-    word_counts = df["blog_post"].str.split().apply(len)
-
-    # Create a DataFrame for Matplotlib
-    data = pd.DataFrame({'Word Count': word_counts})
-
-    # Create violin plot using Matplotlib
-    plt.subplots(figsize=(4, 6), layout='constrained')
-    plt.violinplot(data['Word Count'], showmeans=True, showextrema=True)
-    plt.title('Word Count of Each Post Violin Plot')
-    plt.xlabel('Posts')
-    plt.ylabel('Number of Words')
-
-    plt.savefig(f'word_count_violin_plot.png', dpi=300)
-    plt.show()
-
-
-    ##################################
+def language_word_counts_rounded_calc(df):
 
     filename = "language_word_counts_rounded.json"
     # Check if language_word_counts_rounded is already stored
@@ -312,22 +252,21 @@ def data_initial_statistics(df):
     # Create a pie chart using Plotly
     fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
     fig.update_layout(title='Total word count for each language')
-    fig.show()
 
-    # Create pie chart using Matplotlib
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    colors = ['#1f77b4', '#aec7e8', '#7b97c7', '#386cb0', '#ff7f0e', '#ffbb78', '#ff9896', '#d62728', '#9467bd',
-              '#8c564b']
+    # # Create pie chart using Matplotlib
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # colors = ['#1f77b4', '#aec7e8', '#7b97c7', '#386cb0', '#ff7f0e', '#ffbb78', '#ff9896', '#d62728', '#9467bd',
+    #           '#8c564b']
+    #
+    # plt.pie(values, labels=labels, autopct='%1.1f%%', startangle=140, colors=colors)
+    # plt.title('Total word count for each language')
+    # plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
+    # plt.savefig(f'total_word.png', dpi=300)
+    # plt.show()
+    return fig
 
-    plt.pie(values, labels=labels, autopct='%1.1f%%', startangle=140, colors=colors)
-    plt.title('Total word count for each language')
-    plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
-    plt.savefig(f'total_word.png', dpi=300)
-    plt.show()
 
-    ##################################
-
-    n = 3
+def n_gram_calc(df, n):
     filename = f"{n}_ngram_result.json"
     if os.path.exists(filename):
         with open(filename, 'r') as file:
@@ -347,18 +286,20 @@ def data_initial_statistics(df):
     # Create a bar plot using Plotly
     fig = go.Figure(data=[go.Bar(x=y, y=x, orientation='h')])
     fig.update_layout(title='Bar Plot', xaxis_title='Count', yaxis_title='Category')
-    fig.show()
+    #fig.show()
 
-    # Create horizontal bar plot using Matplotlib
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.barh(x, y)
-    plt.title('Bar Plot')
-    plt.xlabel('Count')
-    plt.ylabel('Category')
-    plt.savefig(f'n_gram.png', dpi=300)
-    plt.show()
+    # # Create horizontal bar plot using Matplotlib
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.barh(x, y)
+    # plt.title('Bar Plot')
+    # plt.xlabel('Count')
+    # plt.ylabel('Category')
+    # plt.savefig(f'n_gram.png', dpi=300)
+    # plt.show()
+    return fig
 
-    ##################################
+
+def polarity_score_calc(df):
 
     filename = f"polarity_score.csv"
     if os.path.exists(filename):
@@ -393,19 +334,19 @@ def data_initial_statistics(df):
                             yaxis=dict(title='Count'))
 
     # Create histogram figure
-    fig_hist = go.Figure(data=[trace_hist], layout=layout_hist)
+    fig = go.Figure(data=[trace_hist], layout=layout_hist)
 
     # Show the histogram
-    fig_hist.show()
-
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.hist(df['polarity_score'], bins=int((1 - (-1)) / bin_size), range=(-1, 1), edgecolor='black')
-    plt.title('Polarity Score Distribution')
-    plt.xlabel('Polarity Score')
-    plt.ylabel('Count')
-    plt.grid(True)
-    plt.savefig(f'polarity_score.png', dpi=300)
-    plt.show()
+    # fig_hist.show()
+    #
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.hist(df['polarity_score'], bins=int((1 - (-1)) / bin_size), range=(-1, 1), edgecolor='black')
+    # plt.title('Polarity Score Distribution')
+    # plt.xlabel('Polarity Score')
+    # plt.ylabel('Count')
+    # plt.grid(True)
+    # plt.savefig(f'polarity_score.png', dpi=300)
+    # plt.show()
 
     # Calculate polarity using sentiment function
     df['polarity'] = df['polarity_score'].map(lambda x: sentiment(x))
@@ -422,20 +363,104 @@ def data_initial_statistics(df):
                            yaxis=dict(title='Count'))
 
     # Create bar plot figure
-    fig_bar = go.Figure(data=[trace_bar], layout=layout_bar)
+    fig_simp = go.Figure(data=[trace_bar], layout=layout_bar)
 
     # Show the bar plot
-    fig_bar.show()
+    #fig_simp.show()
 
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.bar(polarity_percentages.index, polarity_percentages.values)
-    plt.title('Polarity Distribution')
-    plt.xlabel('Polarity')
-    plt.ylabel('Count')
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.bar(polarity_percentages.index, polarity_percentages.values)
+    # plt.title('Polarity Distribution')
+    # plt.xlabel('Polarity')
+    # plt.ylabel('Count')
+    #
+    # plt.grid(True)
+    # plt.savefig(f'polarity.png', dpi=300)
+    # plt.show()
+    return fig, fig_simp
 
-    plt.grid(True)
-    plt.savefig(f'polarity.png', dpi=300)
-    plt.show()
+
+
+def data_initial_statistics(df):
+
+    mean_val, median_val, std_val = calculate_word_count_statistics(df, 'blog_post')
+    print("Mean Word Count:", mean_val)
+    print("Median Word Count:", median_val)
+    print("Standard Deviation of Word Count:", std_val)
+
+
+    ##################################
+
+    matching_df = filter_dataframe(df, 'blog_post', "Öl")
+
+
+    ##################################
+
+
+
+
+    hist_data, bins = word_count_histogram(df, 'blog_post')
+    fig = go.Figure(data=[go.Bar(x=bins, y=hist_data)])
+    fig.update_layout(title='Word Count Histogram of Each Post',
+                       xaxis_title='Number of Words',
+                       yaxis_title='Frequency')
+    # fig.show()
+    #
+    # # Assuming you have already defined bins and hist_data
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # #plt.hist(hist_data, bins=bins)
+    # plt.hist(bins[:-1], bins, weights=hist_data)
+    #
+    # plt.title('Word Count Histogram of Each Post')
+    # plt.xlabel('Number of Words')
+    # plt.ylabel('Frequency')
+    # # fig.subplots_adjust(left=0.15, top=0.95)
+    # plt.savefig(f'word_count_histogram.png', dpi=300)
+    # plt.show()
+
+
+
+
+
+    ##################################
+
+    fig = word_count_violin_plot(df, 'blog_post')
+    #fig.show()
+
+    # Count the number of words in each row of the specified column
+    #word_counts = df["blog_post"].str.split().apply(len)
+
+    # Create a DataFrame for Matplotlib
+    #data = pd.DataFrame({'Word Count': word_counts})
+
+    # Create violin plot using Matplotlib
+    # plt.subplots(figsize=(4, 6), layout='constrained')
+    # plt.violinplot(data['Word Count'], showmeans=True, showextrema=True)
+    # plt.title('Word Count of Each Post Violin Plot')
+    # plt.xlabel('Posts')
+    # plt.ylabel('Number of Words')
+    #
+    # plt.savefig(f'word_count_violin_plot.png', dpi=300)
+    # plt.show()
+
+
+    ##################################
+    fig = language_word_counts_rounded_calc(df)
+
+    #fig.show()
+
+
+    ##################################
+    n=3
+    fig = n_gram_calc(df,n)
+    #fig.show()
+
+
+    ##################################
+
+    fig,fig_simp = polarity_score_calc(df)
+    #fig.show()
+    #fig_simp()
 
 
 # Define a function to lemmatize a list of strings using spaCy
@@ -1164,7 +1189,7 @@ def main():
     print(len(df.index))
 
 
-    #data_initial_statistics(df)
+    data_initial_statistics(df)
 
     # LEMMATIZE GERMAN:
     #df = preprocess(df)

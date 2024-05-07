@@ -9,17 +9,14 @@ home_page = """
 
 Welcome to the NLP Blog Analysis Demo! This website showcases the results of an automated analysis pipeline designed to analyze blog entries. Here's a brief overview of what you'll find:
 
-## Data Preprocessing
-The first step involves preparing and cleaning the dataset. This includes tasks such as classifying quotes, tokenization, general cleaning, and vectorization.
+## Data Exploration
+Begin with exploring the dataset to gain insights into its structure and characteristics. Conduct basic statistical analysis and visualize the data to understand its distribution and properties.
 
-## Classification
-Next, the texts are categorized, for example, into sentiments and overarching themes. 
+## Data Preprocessing Pipeline
+In this phase, demonstrate the preprocessing pipeline, highlighting each step along with its intermediate results. Tasks include data cleaning, tokenization, and vectorization.
 
-## Clustering
-Individual texts or topics are grouped based on similarities. We use k-Means Clustering, a common algorithm for this task.
-
-## Result Presentation
-Finally, the results from the classification and clustering steps are presented. You'll find various visualization techniques such as tag clouds to help understand the analyzed data.
+## Final Analysis
+Conclude with the analysis post preprocessing. Showcase the results of classification and clustering, and employ visualization techniques such as tag clouds to present the findings effectively.
 
 Feel free to explore the demo and interact with the presented results. 
 
