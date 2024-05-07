@@ -34,7 +34,7 @@ from src.pages.word_types_md import word_types
 
 def get_table():
     # Assuming your CSV file is named 'example.csv'
-    csv_file_path = Path(r'data\posts.csv')
+    csv_file_path = Path(r'data/posts.csv')
 
     # Read only the first 10 columns and a specific number of rows from the CSV file into a pandas DataFrame
     num_rows = 3
@@ -44,7 +44,7 @@ def get_table():
 
 
 table = get_table()
-table_full = pd.read_csv(Path(r'data\posts.csv'), header=None, names=["blog_post"])
+table_full = pd.read_csv(Path(r'data/posts.csv'), header=None, names=["blog_post"])
 table_full.dropna(inplace=True)
 table_first_page = copy(table_full)
 
