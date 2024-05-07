@@ -1,8 +1,4 @@
-"""
-Module Name: Page Markdown Template
-Author: Kenneth Leung
-Last Modified: 19 Mar 2023
-"""
+
 import pandas as pd
 from taipy.gui import notify
 

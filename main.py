@@ -65,13 +65,6 @@ def download_missing_nltk_dataset():
 
 
 
-
-# Result Presentation
-def visualize_clusters(clusters):
-    # Implementiere Visualisierung der Clustering-Ergebnisse
-    plt.scatter(clusters[:, 0], clusters[:, 1], c='blue', alpha=0.5)
-    plt.show()
-
 # Function to detect language and count words
 def detect_and_count_words(text):
 
@@ -451,8 +444,10 @@ def data_initial_statistics(df):
 
 
     ##################################
-    n=3
-    fig = n_gram_calc(df,n)
+
+    fig = n_gram_calc(df,1)
+    fig = n_gram_calc(df,2)
+    fig = n_gram_calc(df,3)
     #fig.show()
 
 
@@ -1215,7 +1210,7 @@ def main():
     print(len(df.index))
 
 
-    #data_initial_statistics(df)
+    data_initial_statistics(df)
 
     # LEMMATIZE GERMAN:
     #df = preprocess(df)
@@ -1262,7 +1257,7 @@ def main():
         df.to_csv(filename, index=False)
 
 
-    evaluation(df)
+    #evaluation(df)
 
 
 
