@@ -1,6 +1,6 @@
 
 analysis_polarity_page = """
-<|navbar|lov={[("analysis","Start"), ("/analysis_n_gram", "N-Gram"), ("/analysis_polarity", "Polarity")]}|>
+<|navbar|lov={[("analysis","Start"), ("/analysis_n_gram", "N-Gram"), ("/analysis_polarity", "Polarity"), ("/analysis_clustering", "Clustering")]}|>
 # Polarity of Data
 
 

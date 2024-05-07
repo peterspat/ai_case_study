@@ -12,7 +12,9 @@ from wordcloud import WordCloud
 from main import filter_dataframe, calculate_word_count_statistics, word_count_histogram, \
     language_word_counts_rounded_calc, \
     word_count_violin_plot, n_gram_calc, polarity_score_calc, remove_stopwords_german, remove_stopwords_english, \
-    remove_modalpartikeln_german, parse_string_to_list, analysis_n_gram_calc, analysis_polarity_score_calc
+    remove_modalpartikeln_german, parse_string_to_list, analysis_n_gram_calc, analysis_polarity_score_calc, \
+    my_clustering
+from src.pages.analysis_clustering_md import analysis_clustering_page
 from src.pages.analysis_md import analysis_page
 from src.pages.analysis_n_gram_md import analysis_n_gram_page
 from src.pages.analysis_polarity_md import analysis_polarity_page
@@ -166,7 +168,17 @@ analysis_polarity_histogram, analysis_polarity_histogram_simplified = analysis_p
 def on_slider_ngram_analysis(state):
      state.analysis_histogram_ngram = analysis_n_gram_calc(copy(df_for_analysis_n_gram_calc), state.analysis_slider_ngram_value)
 
+sel=0
 
+word_image_clustering = "evaluation__CountVectorizer.png"
+def update_chart(state):
+    print("'Update chart' button clicked")
+    # Select the right pipeline
+    print(state.sel)
+    if state.sel[0] == "CountVectorizer":
+        state.word_image_clustering = "evaluation__CountVectorizer.png"
+    elif state.sel[0] == "TfidfVectorizer":
+        state.word_image_clustering = "evaluation__TfidfVectorizer.png"
 
 
 
@@ -215,6 +227,7 @@ pages = {"/": page_markdown,
          "word_types": word_types,
          "analysis_n_gram": analysis_n_gram_page,
          "analysis_polarity": analysis_polarity_page,
+         "analysis_clustering":analysis_clustering_page
          }
 
 

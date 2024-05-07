@@ -6,7 +6,7 @@ text_streamlining = """
 
 <|{table}|table|show_all|>
 
-## Removing URLS and non-alphanumeric characters
+## Removing URLs and non-alphanumeric characters
 
 
 <|{table_after_all}|table|show_all|>

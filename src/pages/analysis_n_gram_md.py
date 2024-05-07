@@ -1,6 +1,6 @@
 
 analysis_n_gram_page = """
-<|navbar|lov={[("analysis","Start"), ("/analysis_n_gram", "N-Gram"), ("/analysis_polarity", "Polarity")]}|>
+<|navbar|lov={[("analysis","Start"), ("/analysis_n_gram", "N-Gram"), ("/analysis_polarity", "Polarity"), ("/analysis_clustering", "Clustering")]}|>
 # N-Grams of Data
 Number of N-Grams:
 

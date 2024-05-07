@@ -10,11 +10,12 @@ import matplotlib.pyplot as plt
 import scienceplots
 from sklearn import metrics
 from sklearn.cluster import KMeans
+from wordcloud import WordCloud
 
 plt.style.use('science')
 
 from HanTa import HanoverTagger as ht
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from spellchecker.spellchecker import SpellChecker
 
 import spacy
@@ -487,7 +488,7 @@ def data_initial_statistics(df):
     fig = go.Figure(data=[go.Bar(x=bins, y=hist_data)])
     fig.update_layout(title='Word Count Histogram of Each Post',
                        xaxis_title='Number of Words',
-                       yaxis_title='Frequency')
+                       yaxis_title='Count')
     # fig.show()
     #
     # # Assuming you have already defined bins and hist_data
@@ -619,7 +620,7 @@ def remove_stopwords_german(df):
     fig_stopword_de.update_layout(
         title='Top {} Stopwords'.format(top_x),
         xaxis=dict(title='Stopwords'),
-        yaxis=dict(title='Frequency')
+        yaxis=dict(title='Count')
     )
 
     # Show the plot
@@ -678,7 +679,7 @@ def remove_stopwords_german(df):
     fig_remaining_words_after_de.update_layout(
         title='Top {} Non-Stop'.format(top_x),
         xaxis=dict(title='Non-Stopwords'),
-        yaxis=dict(title='Frequency')
+        yaxis=dict(title='Count')
     )
 
     # Show the plot
@@ -741,7 +742,7 @@ def remove_stopwords_english(df):
     fig_stopword_en.update_layout(
         title='Top {} Stopwords'.format(top_x),
         xaxis=dict(title='Stopwords'),
-        yaxis=dict(title='Frequency')
+        yaxis=dict(title='Count')
     )
 
     # Show the plot
@@ -800,7 +801,7 @@ def remove_stopwords_english(df):
     fig_remaining_words_after_en.update_layout(
         title='Top {} Non-Stop'.format(top_x),
         xaxis=dict(title='Non-Stopwords'),
-        yaxis=dict(title='Frequency')
+        yaxis=dict(title='Count')
     )
 
     # Show the plot
@@ -876,7 +877,7 @@ def remove_modalpartikeln_german(df):
     fig_modal_de.update_layout(
         title='Top {} Modal Particle'.format(top_x),
         xaxis=dict(title='Modal Particle'),
-        yaxis=dict(title='Frequency')
+        yaxis=dict(title='Count')
     )
 
     # Show the plot
@@ -931,7 +932,7 @@ def remove_modalpartikeln_german(df):
     fig_remaining_words_after_modal_de.update_layout(
         title='Top {} Non-Modal-Particle'.format(top_x),
         xaxis=dict(title='Non-Modal-Particle'),
-        yaxis=dict(title='Frequency')
+        yaxis=dict(title='Count')
     )
 
     # Show the plot
@@ -1097,6 +1098,67 @@ def analysis_n_gram_calc(df, n):
     # plt.savefig(f'evaluation_n_gram.png', dpi=300)
     # plt.show()
     return fig
+def frequencies_dict(cluster_index,true_k,centroids,terms,model):
+    if cluster_index > true_k - 1:
+        return
+    term_frequencies = model.cluster_centers_[cluster_index]
+    sorted_terms = centroids[cluster_index]
+    frequencies = {terms[i]: term_frequencies[i] for i in sorted_terms}
+    return frequencies
+
+
+def my_clustering(method, df):
+    eval_file_name = "evaluation_"
+    if method == "CountVectorizer":
+        vectorizer = CountVectorizer()
+        eval_file_name = eval_file_name + "_CountVectorizer.png"
+    elif method == "TfidfVectorizer":
+        vectorizer = TfidfVectorizer()
+        eval_file_name = eval_file_name + "_TfidfVectorizer.png"
+
+    if os.path.exists(eval_file_name):
+        x=1
+    else:
+
+        vectorizer = CountVectorizer()
+        comb = df['only_adj_noun_propn'].apply(lambda x: ' '.join(x))
+        bow = vectorizer.fit_transform(comb.values)
+        terms = vectorizer.get_feature_names_out()
+        print(terms[1:10])
+        n_cluster = 10
+        model = KMeans(n_clusters=n_cluster, init='k-means++', random_state=42)
+        model.fit(bow)
+        labels = model.labels_
+        cluster_center = model.cluster_centers_
+        silhouette_score = metrics.silhouette_score(bow, labels, metric='euclidean')
+
+        centroids = model.cluster_centers_.argsort()[:, ::-1]  ## Indices of largest centroids' entries in descending order
+
+        for i in range(n_cluster):
+            print("Cluster %d:" % i, end='')
+            for ind in centroids[i, :10]:
+                print(' %s' % terms[ind], end='')
+            print()
+
+        df['labels'] = model.labels_  # the last column you can see the label numebers
+        count = list(df.groupby(['labels'])['only_adj_noun_propn'].count())
+        fig, axes = plt.subplots(5, 2, figsize=(12,12), constrained_layout=True)
+
+        total_index = 0
+        for i in range(5) :
+            for j in range(2) :
+                freq = frequencies_dict(total_index, n_cluster, centroids, terms, model)
+                wc = WordCloud(background_color="white", max_words=50,width=800, height=400)
+                # generate word cloud
+                wc.generate_from_frequencies(freq)
+
+                # show
+                axes[i, j].imshow(wc, interpolation="bilinear")
+                axes[i, j].axis("off")
+                axes[i, j].set_title("Cluster "+str(total_index)+"; count="+str(count[total_index]))
+                total_index = total_index +1
+
+        plt.savefig(eval_file_name, dpi=300)
 
 
 def evaluation(df):
@@ -1166,51 +1228,58 @@ def evaluation(df):
 
 
 
-    count_vect = CountVectorizer()
-    comb = df['only_adj_noun_propn'].apply(lambda x: ' '.join(x))
-    bow = count_vect.fit_transform(comb.values)
-    terms = count_vect.get_feature_names_out()
-    print(terms[1:10])
-    n_cluster = 10
-    model = KMeans(n_clusters=n_cluster, init='k-means++', random_state=42)
-    model.fit(bow)
-    labels = model.labels_
-    cluster_center = model.cluster_centers_
-    silhouette_score = metrics.silhouette_score(bow, labels, metric='euclidean')
-    df['labels'] = model.labels_  # the last column you can see the label numebers
-    df.head(2)
-    print(df.groupby(['labels']).count())
-    print("Top terms per cluster:")
-    order_centroids = model.cluster_centers_.argsort()[:, ::-1]
-    terms = count_vect.get_feature_names_out()
-    for i in range(n_cluster):
-        print("Cluster %d:" % i, end='')
-        for ind in order_centroids[i, :n_cluster]:
-            print(' %s' % terms[ind], end='')
-            print()
-    plt.subplots(figsize=(6, 4), layout='constrained')
-    plt.bar([x for x in range(n_cluster)], df.groupby(['labels'])['only_adj_noun_propn'].count(), alpha=0.4)
-    plt.title('KMeans cluster points')
-    plt.xlabel("Cluster number")
-    plt.ylabel("Number of points")
-    plt.savefig(f'CountVectorizer_kmeans_only_adj_noun_propn.png', dpi=300)
-    plt.show()
+
+    method = "CountVectorizer"
+    my_clustering(method, df)
+    my_clustering(method="TfidfVectorizer", df=df)
 
 
-    dic = corpora.Dictionary(df['only_adj_noun_propn'])
-    bow_corpus = [dic.doc2bow(doc) for doc in df['only_adj_noun_propn']]
+    #plt.show()
 
-    lda_model = models.LdaMulticore(bow_corpus,
-                                    random_state=42,
-                                           num_topics=10,
-                                           id2word=dic,
-                                            chunksize=20,
-                                           passes=10,
-                                    iterations=40,
-                                           workers=5)
+    # df['labels'] = model.labels_  # the last column you can see the label numebers
+    # df.head(2)
+    # print(df.groupby(['labels']).count())
+    # print("Top terms per cluster:")
+    # order_centroids = model.cluster_centers_.argsort()[:, ::-1]
+    # terms = vectorizer.get_feature_names_out()
+    # for i in range(n_cluster):
+    #     print("Cluster %d:" % i, end='')
+    #     for ind in order_centroids[i, :n_cluster]:
+    #         print(' %s' % terms[ind], end='')
+    #         print()
+    # plt.subplots(figsize=(6, 4), layout='constrained')
+    # plt.bar([x for x in range(n_cluster)], df.groupby(['labels'])['only_adj_noun_propn'].count(), alpha=0.4)
+    # plt.title('KMeans cluster points')
+    # plt.xlabel("Cluster number")
+    # plt.ylabel("Number of points")
+    # plt.savefig(f'CountVectorizer_kmeans_only_adj_noun_propn.png', dpi=300)
+    # plt.show()
 
 
-    print(lda_model.show_topics())
+
+
+
+    # dic = corpora.Dictionary(df['only_adj_noun_propn'])
+    # bow_corpus = [dic.doc2bow(doc) for doc in df['only_adj_noun_propn']]
+    #
+    # lda_model = models.LdaMulticore(bow_corpus,
+    #                                 random_state=42,
+    #                                        num_topics=10,
+    #                                        id2word=dic,
+    #                                         chunksize=20,
+    #                                        passes=10,
+    #                                 iterations=40,
+    #                                        workers=5)
+    #
+    #
+    # print(lda_model.show_topics())
+    #
+
+
+
+
+
+
 
     #pyLDAvis.enable_notebook()
     #vis = pyLDAvis.gensim.prepare(lda_model, bow_corpus, dic)

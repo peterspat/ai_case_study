@@ -2,16 +2,17 @@
 home_page = """
 # Home
 
-Welcome to the NLP Blog Analysis Demo! This website showcases the results of an automated analysis pipeline designed to analyze blog entries. Here's a brief overview of what you'll find:
+Welcome to AI USE CASE Demo! This website showcases the results of an automated analysis pipeline designed to analyze blog entries. Here's a brief overview of what you'll find:
 
 ## Data Exploration
-First step is always to exploring the dataset to gain insights into its structure and characteristics. Thus, basic statistical analysis and visualizing the data is crucial to understand its distribution and properties.
+First step is always to explore the dataset to gain insights into its structure and characteristics. Thus, basic statistical analysis and visualizing the data is crucial to understand its distribution and properties.
 
 ## Data Preprocessing Pipeline
-In each step of the preprocessing pipeline conducts different steps for data cleaning.
+In each step of the preprocessing pipeline conducts different steps of data cleaning.
 
 ## Final Analysis
 Showcasing the results of classification and clustering.
+<br/>
 
 Feel free to explore the demo and interact with the presented results. 
 
